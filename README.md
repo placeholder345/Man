@@ -7,6 +7,9 @@ This repo holds two small Node apps with no build step:
 - **[ManTube](tube/)** (`tube/`): a self-hosted video site like YouTube. Upload videos
   in full original quality and watch them in a custom player, with channels, likes,
   comments, search and history. See [`tube/README.md`](tube/README.md).
+- **[`ManTube.html`](ManTube.html)**: the same video site as a single file with no
+  server. Double-click it to open it in your browser. Videos are saved privately in that
+  browser, in full original quality.
 
 ## Man: setup
 

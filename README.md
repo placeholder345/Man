@@ -1,9 +1,14 @@
 # Man
 
-A clean, fast chat interface for talking to Claude — streamed responses, markdown
-rendering, and a warm editorial look, in a single small Node app with no build step.
+This repo holds two small Node apps with no build step:
 
-## Setup
+- **Man** (this folder): a clean, fast chat interface for talking to Claude, with
+  streamed responses, markdown rendering and a warm editorial look.
+- **[ManTube](tube/)** (`tube/`): a self-hosted video site like YouTube. Upload videos
+  in full original quality and watch them in a custom player, with channels, likes,
+  comments, search and history. See [`tube/README.md`](tube/README.md).
+
+## Man: setup
 
 ```bash
 npm install

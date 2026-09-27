@@ -24,6 +24,19 @@ Open http://localhost:3000.
 The full conversation history is kept in the browser and re-sent with each
 message, per how the Claude API is designed to be used (it's stateless).
 
+## The Doctors (mini game)
+
+`public/the-doctors/index.html` is a small point-and-click game, self-contained in one
+file with no dependencies. You wake up to a text from the surgery, drive over with Teddy
+in the back seat, check in, wait two minutes, have a blood test, drive home and use the
+bathroom.
+
+- With the server running, open http://localhost:3000/the-doctors/
+- Or open the file directly in a browser; it doesn't need the server.
+
+Controls: ← → (or tap the floor) to walk, E to use things, Space to continue dialogue.
+When driving, → accelerates and ← brakes. There are on-screen buttons for touch screens.
+
 ## Configuration
 
 | Variable | Purpose | Default |

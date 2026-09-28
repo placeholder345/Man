@@ -30,3 +30,11 @@ message, per how the Claude API is designed to be used (it's stateless).
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | — (required) |
 | `PORT` | Port the server listens on | `3000` |
+
+## Hollowmere Fields (bonus game)
+
+`public/fields.html` is a small top-down adventure game in a single file. With the
+server running, open http://localhost:3000/fields.html (or open the file directly
+in a browser). Walk the fields, tame and ride wild horses, fight slimes, wolves,
+goblins and bandits, and take down the ogre in the Old Ruin. Works with keyboard
+and mouse, or touch controls on phones.

@@ -13,6 +13,10 @@ npm start
 
 Open http://localhost:3000.
 
+The repo also includes **Washers**, a standalone dog-wash booking landing page at
+`public/washers.html` (http://localhost:3000/washers.html). It needs no server and
+works when opened directly in a browser.
+
 ## How it works
 
 - `server.js` — an Express server with one route, `POST /api/chat`, that streams

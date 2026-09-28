@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Washers Dog Wash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:ital,wght@0,400..800;1,400..600&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&display=swap">
+<style>
+:root {
+  --ground: #EDF3F6;
+  --surface: #FFFFFF;
+  --surface-2: #E2EBF0;
+  --ink: #0F2029;
+  --muted: #526670;
+  --line: #CCDAE2;
+  --accent: #1D4ED8;
+  --accent-hover: #1740B5;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DCE5FF;
+  --duck: #FFCC33;
+  --duck-ink: #2B2200;
+  --paper: #FFFFFF;
+  --paper-ink: #1C1F21;
+  --paper-muted: #6A7176;
+  --paper-line: #D5D9DB;
+  --bubble: rgba(29, 78, 216, 0.16);
+  --shadow: 0 1px 2px rgba(15, 32, 41, .06), 0 12px 32px -12px rgba(15, 32, 41, .18);
+
+  --display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0A141A;
+    --surface: #112029;
+    --surface-2: #172A35;
+    --ink: #E7F0F4;
+    --muted: #93A8B3;
+    --line: #243A47;
+    --accent: #8AAEFF;
+    --accent-hover: #A9C3FF;
+    --accent-ink: #0A141A;
+    --accent-soft: #1A2B52;
+    --duck: #FFD24D;
+    --duck-ink: #2B2200;
+    --paper: #F1F2EE;
+    --paper-ink: #1C1F21;
+    --paper-muted: #636A6F;
+    --paper-line: #CBCFD0;
+    --bubble: rgba(138, 174, 255, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 16px 40px -12px rgba(0, 0, 0, .55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0A141A;
+  --surface: #112029;
+  --surface-2: #172A35;
+  --ink: #E7F0F4;
+  --muted: #93A8B3;
+  --line: #243A47;
+  --accent: #8AAEFF;
+  --accent-hover: #A9C3FF;
+  --accent-ink: #0A141A;
+  --accent-soft: #1A2B52;
+  --duck: #FFD24D;
+  --duck-ink: #2B2200;
+  --paper: #F1F2EE;
+  --paper-ink: #1C1F21;
+  --paper-muted: #636A6F;
+  --paper-line: #CBCFD0;
+  --bubble: rgba(138, 174, 255, 0.14);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 16px 40px -12px rgba(0, 0, 0, .55);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.wrap {
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding-inline: max(16px, 4vw);
+}
+
+/* ---------- Top bar ---------- */
+.bar { padding-block: 22px; }
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: none; border: 0; padding: 0;
+  font-family: var(--display);
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+  font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em;
+}
+.logo-mark { position: relative; width: 30px; height: 30px; flex: none; }
+.logo-mark i {
+  position: absolute; border-radius: 50%;
+  border: 2.5px solid var(--accent);
+  background: var(--surface);
+}
+.logo-mark i:nth-child(1) { width: 20px; height: 20px; left: 0; bottom: 0; }
+.logo-mark i:nth-child(2) { width: 13px; height: 13px; right: 0; top: 2px; background: var(--duck); border-color: var(--ink); }
+.bar-note { font-size: .9rem; color: var(--muted); }
+
+/* ---------- Screens ---------- */
+.screen { padding-block: 8px 72px; }
+.screen.enter { animation: rise .45s cubic-bezier(.2, .7, .2, 1); }
+@keyframes rise { from { opacity: .001; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+h1, h2 {
+  font-family: var(--display);
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  margin: 0;
+  text-wrap: balance;
+}
+h2:focus { outline: none; }
+.eyebrow {
+  font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin: 0;
+}
+
+/* ---------- Landing ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+  padding-block: clamp(24px, 6vw, 72px) 0;
+}
+.hero h1 {
+  font-size: clamp(3.25rem, 9.5vw, 7rem);
+  font-weight: 800;
+}
+.hero h1 .line2 {
+  display: block;
+  margin-top: .12em;
+  font-size: .56em;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  color: var(--muted);
+}
+.hero h1 .brand {
+  color: var(--accent);
+  font-weight: 700;
+  background: linear-gradient(transparent 62%, color-mix(in srgb, var(--duck) 70%, transparent) 62%, color-mix(in srgb, var(--duck) 70%, transparent) 90%, transparent 90%);
+  padding-inline: .06em;
+}
+.hero-lede { max-width: 34ch; margin: 28px 0 32px; color: var(--muted); font-size: 1.15rem; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border: 0; border-radius: 14px;
+  padding: 14px 22px;
+  font-weight: 700; font-size: 1.02rem;
+  transition: background-color .15s, transform .15s, box-shadow .15s, opacity .15s;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 18px -8px var(--accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
+.btn-quiet { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.btn-quiet:hover { border-color: var(--ink); }
+.btn-text { background: none; border: 0; padding: 10px 4px; color: var(--accent); font-weight: 700; }
+.btn-text:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.btn-start { padding: 16px 26px 16px 24px; text-align: left; }
+.btn-start .stack { display: grid; line-height: 1.2; }
+.btn-start .stack small { font-weight: 500; font-size: .85rem; opacity: .85; }
+.btn-start svg { flex: none; transition: transform .2s; }
+.btn-start:hover svg { transform: translateX(3px); }
+
+.facts {
+  list-style: none; margin: 44px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 10px 28px;
+  font-size: .95rem; color: var(--muted);
+}
+.facts li { display: flex; align-items: baseline; gap: 8px; }
+.facts b { font-family: var(--mono); font-weight: 500; color: var(--ink); font-size: .95rem; }
+
+.hero-art { position: relative; min-height: 360px; display: grid; place-items: center; }
+.bubble {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.9) 0 8%, transparent 9%), var(--bubble);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  animation: float 7s ease-in-out infinite;
+}
+.bubble.b1 { width: 110px; height: 110px; top: 2%; right: 4%; }
+.bubble.b2 { width: 56px; height: 56px; bottom: 8%; left: 2%; animation-delay: -2s; }
+.bubble.b3 { width: 34px; height: 34px; top: 16%; left: 14%; animation-delay: -4s; }
+.bubble.b4 { width: 22px; height: 22px; bottom: 22%; right: 10%; animation-delay: -1s; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+.ticket {
+  position: relative; z-index: 1;
+  width: min(100%, 300px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 22px 20px;
+  box-shadow: var(--shadow);
+  transform: rotate(-3deg);
+}
+.ticket-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.pill {
+  display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--duck); color: var(--duck-ink);
+}
+.ticket-num {
+  font-family: var(--display); font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-weight: 800; font-size: 4.5rem; line-height: 1; margin: 14px 0 2px; letter-spacing: -0.04em;
+}
+.ticket-sub { color: var(--muted); margin: 0 0 16px; }
+.ticket dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: .92rem; border-top: 1.5px dashed var(--line); padding-top: 14px; }
+.ticket dt { color: var(--muted); }
+.ticket dd { margin: 0; text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- Step shell ---------- */
+.step { max-width: 800px; }
+.progress { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+.progress-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; padding: 6px 2px; color: var(--muted); font-weight: 600; font-size: .95rem;
+}
+.progress-back:hover { color: var(--ink); }
+.progress-meta { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.segments { display: flex; gap: 5px; }
+.segments i { width: 28px; height: 6px; border-radius: 99px; background: var(--line); }
+.segments i.on { background: var(--accent); }
+
+.step h2 { font-size: clamp(2.3rem, 6vw, 3.6rem); font-weight: 700; }
+.step-lede { color: var(--muted); font-size: 1.15rem; margin: 12px 0 32px; max-width: 46ch; }
+.step-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 32px; }
+.helper { font-size: .9rem; color: var(--muted); }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+/* ---------- Calendar ---------- */
+.booking-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 16px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+.cal-title { font-family: var(--display); font-variation-settings: "SOFT" 100; font-weight: 600; font-size: 1.3rem; margin: 0; }
+.icon-btn {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 12px; border: 1.5px solid var(--line); background: transparent;
+}
+.icon-btn:hover:not(:disabled) { border-color: var(--ink); }
+.icon-btn:disabled { opacity: .3; cursor: not-allowed; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.cal-dow { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-bottom: 6px; }
+.day {
+  aspect-ratio: 1; max-width: 100%;
+  display: grid; place-items: center;
+  border: 0; border-radius: 12px; background: transparent;
+  font-variant-numeric: tabular-nums; font-weight: 600; font-size: .98rem;
+  position: relative;
+}
+.day:hover:not(:disabled):not([aria-pressed="true"]) { background: var(--surface-2); }
+.day:disabled { color: var(--muted); opacity: .4; cursor: not-allowed; }
+.day.today::after { content: ""; position: absolute; bottom: 6px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.day[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+.slots-title { font-weight: 700; margin: 0 0 4px; }
+.slots-sub { color: var(--muted); font-size: .92rem; margin: 0 0 16px; }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.slot {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2px 6px;
+  padding: 11px 12px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: transparent;
+  font-family: var(--mono); font-size: .92rem; font-variant-numeric: tabular-nums;
+}
+.slot small { font-family: var(--body); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.slot:hover:not(:disabled):not([aria-pressed="true"]) { border-color: var(--ink); }
+.slot:disabled { opacity: .45; cursor: not-allowed; text-decoration: line-through; text-decoration-color: var(--muted); }
+.slot:disabled small { text-decoration: none; }
+.slot[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.slots-empty { color: var(--muted); font-size: .95rem; padding: 18px 0; margin: 0; }
+
+/* ---------- Breed ---------- */
+.field-label { display: block; font-weight: 700; margin-bottom: 8px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search input {
+  width: 100%;
+  padding: 16px 16px 16px 48px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-size: 1.1rem;
+}
+.search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.suggest { list-style: none; margin: 8px 0 0; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
+.suggest button {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  text-align: left; padding: 10px 12px; border: 0; border-radius: 10px; background: transparent;
+}
+.suggest button:hover, .suggest button:focus-visible { background: var(--surface-2); outline: none; }
+.suggest mark { background: none; color: var(--accent); font-weight: 700; }
+.suggest small, .size-tag { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+.popular { margin-top: 20px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip {
+  padding: 8px 14px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: var(--surface);
+  font-weight: 600; font-size: .95rem;
+}
+.chip:hover { border-color: var(--ink); }
+
+.sizes { margin-top: 22px; }
+.sizes-q { font-weight: 700; margin: 0 0 10px; }
+.size-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.size-opt {
+  text-align: left; padding: 14px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--surface);
+  display: grid; gap: 2px;
+}
+.size-opt b { font-size: 1.02rem; }
+.size-opt span { font-size: .85rem; color: var(--muted); }
+.size-opt:hover:not([aria-pressed="true"]) { border-color: var(--ink); }
+.size-opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+.station-note {
+  display: flex; align-items: center; gap: 16px;
+  margin-top: 22px; padding: 16px 18px;
+  border-radius: 16px; background: var(--surface-2);
+}
+.station-badge {
+  flex: none; width: 56px; height: 56px; border-radius: 14px;
+  display: grid; place-items: center;
+  background: var(--duck); color: var(--duck-ink);
+  font-family: var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; font-weight: 800; font-size: 1.9rem;
+}
+.station-note p { margin: 0; }
+.station-note .muted { color: var(--muted); font-size: .92rem; }
+
+/* ---------- Receipt ---------- */
+.receipt-wrap { filter: drop-shadow(0 14px 28px rgba(15, 32, 41, .16)); max-width: 440px; padding-bottom: 12px; }
+.receipt {
+  position: relative;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--mono);
+  font-size: .92rem;
+  font-variant-numeric: tabular-nums;
+  padding: 28px 26px 22px;
+  border-radius: 6px 6px 0 0;
+}
+.receipt::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -12px; height: 12px;
+  background: radial-gradient(circle at 10px 0, var(--paper) 10px, transparent 10.5px) 0 0 / 20px 12px repeat-x;
+}
+.r-brand { text-align: center; }
+.r-brand strong {
+  display: block;
+  font-family: var(--display); font-variation-settings: "SOFT" 100, "WONK" 0;
+  font-weight: 800; font-size: 1.9rem; letter-spacing: -0.02em; line-height: 1.1;
+}
+.r-brand span { color: var(--paper-muted); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.r-rule { border: 0; border-top: 1.5px dashed var(--paper-line); margin: 16px 0; }
+.r-rows { display: grid; gap: 6px; margin: 0; }
+.r-row { display: flex; justify-content: space-between; gap: 16px; }
+.r-row dt { color: var(--paper-muted); flex: none; }
+.r-row dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.r-item { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.r-item span:first-child { overflow-wrap: anywhere; }
+.r-item .sub { display: block; color: var(--paper-muted); font-size: .8rem; }
+.r-items { display: grid; gap: 10px; }
+.r-total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 500; font-size: 1.15rem; }
+.r-foot { text-align: center; color: var(--paper-muted); font-size: .8rem; margin: 16px 0 0; }
+.r-barcode {
+  height: 38px; margin: 14px auto 0; width: 80%;
+  background: repeating-linear-gradient(90deg, var(--paper-ink) 0 2px, transparent 2px 4px, var(--paper-ink) 4px 5px, transparent 5px 8px, var(--paper-ink) 8px 11px, transparent 11px 12px);
+}
+
+.review-grid { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 32px; align-items: start; }
+.review-side { display: grid; gap: 12px; align-content: start; padding-top: 4px; }
+.review-side p { margin: 0; color: var(--muted); }
+.edit-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+
+/* ---------- Extras ---------- */
+.extras { display: grid; gap: 12px; }
+.extra {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
+  padding: 18px 20px; border-radius: 18px;
+  border: 1.5px solid var(--line); background: var(--surface);
+  cursor: pointer;
+  position: relative;
+  transition: border-color .15s, background-color .15s;
+}
+.extra:hover { border-color: var(--ink); }
+.extra:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.extra input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.extra:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+.check {
+  width: 26px; height: 26px; border-radius: 8px;
+  border: 2px solid var(--line); display: grid; place-items: center;
+  background: var(--surface); transition: background-color .15s, border-color .15s;
+}
+.check svg { opacity: 0; transform: scale(.6); transition: opacity .15s, transform .15s; color: var(--accent-ink); }
+.extra input:checked ~ .check { background: var(--accent); border-color: var(--accent); }
+.extra input:checked ~ .check svg { opacity: 1; transform: none; }
+.extra-name { font-weight: 700; font-size: 1.08rem; display: block; }
+.extra-desc { color: var(--muted); font-size: .92rem; display: block; }
+.extra-price { font-family: var(--mono); font-weight: 500; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+
+.total-bar {
+  display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 16px;
+  margin-top: 20px; padding: 16px 20px; border-radius: 16px; background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+}
+.total-bar .breakdown { color: var(--muted); font-size: .92rem; font-family: var(--mono); }
+.total-bar strong { font-family: var(--mono); font-weight: 500; font-size: 1.3rem; }
+
+/* ---------- Done ---------- */
+.done-mark {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--duck); color: var(--duck-ink);
+  margin-bottom: 20px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { min-height: 300px; }
+  .booking-grid, .review-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .bar-note { display: none; }
+  .size-opts { grid-template-columns: 1fr; }
+  .progress-meta { margin-left: 0; width: 100%; justify-content: space-between; }
+  .segments i { width: 22px; }
+  .extra { grid-template-columns: auto 1fr; }
+  .extra-price { grid-column: 2; }
+  .btn-start { width: 100%; justify-content: space-between; }
+  .receipt { padding-inline: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <button class="logo" type="button" id="logo" aria-label="Washers home">
+      <span class="logo-mark" aria-hidden="true"><i></i><i></i></span>
+      Washers
+    </button>
+    <span class="bar-note">Self-serve dog wash stations</span>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+
+  <!-- Landing -->
+  <section class="screen" data-screen="home" aria-labelledby="home-title">
+    <div class="hero">
+      <div>
+        <h1 id="home-title">Wash your dog.<span class="line2">Easily with <span class="brand">Washers</span></span></h1>
+        <p class="hero-lede">Book a warm, ready-to-go wash station sized for your dog. Shampoo, towels and a blow dryer are waiting when you arrive.</p>
+        <button class="btn btn-primary btn-start" type="button" data-go="date" id="start-btn">
+          <span class="stack">Get started<small>With a booking</small></span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <ul class="facts">
+          <li><b>38°C</b> warm water</li>
+          <li><b>30 min</b> slots</li>
+          <li><b>3</b> tub sizes</li>
+        </ul>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <span class="bubble b1"></span><span class="bubble b2"></span><span class="bubble b3"></span><span class="bubble b4"></span>
+        <div class="ticket">
+          <div class="ticket-top"><span class="eyebrow">Your station</span><span class="pill">Ready</span></div>
+          <p class="ticket-num">4</p>
+          <p class="ticket-sub">Walk-in tub with ramp</p>
+          <dl>
+            <dt>Water</dt><dd>38°C</dd>
+            <dt>Slot</dt><dd>10:30 AM</dd>
+            <dt>Length</dt><dd>30 min</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 1: Date -->
+  <section class="screen step" data-screen="date" aria-labelledby="date-title" hidden>
+    <div class="progress" data-step="1"></div>
+    <p class="eyebrow">Make a booking</p>
+    <h2 id="date-title" tabindex="-1">Set a date for your fluffy friend</h2>
+    <p class="step-lede">Pick a day, then a 30 minute slot that suits you.</p>
+
+    <div class="booking-grid">
+      <div class="panel">
+        <div class="cal-head">
+          <button class="icon-btn" type="button" id="cal-prev" aria-label="Previous month">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <p class="cal-title" id="cal-title" aria-live="polite"></p>
+          <button class="icon-btn" type="button" id="cal-next" aria-label="Next month">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="panel">
+        <p class="slots-title" id="slots-title">Choose a day first</p>
+        <p class="slots-sub" id="slots-sub">Available times will show up here.</p>
+        <div class="slots" id="slots"></div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary" type="button" id="date-next" disabled>Continue</button>
+      <span class="helper" id="date-helper">Choose a day and a time to continue.</span>
+    </div>
+  </section>
+
+  <!-- Step 2: Breed -->
+  <section class="screen step" data-screen="breed" aria-labelledby="breed-title" hidden>
+    <div class="progress" data-step="2"></div>
+    <p class="eyebrow">About your dog</p>
+    <h2 id="breed-title" tabindex="-1">What is your dog breed?</h2>
+    <p class="step-lede">This helps us get the right wash station.</p>
+
+    <label class="field-label" for="breed-input">Breed</label>
+    <div class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="breed-input" type="text" autocomplete="off" spellcheck="false" placeholder="Start typing, like Labrador" aria-describedby="breed-hint" aria-controls="breed-suggest">
+    </div>
+    <ul class="suggest" id="breed-suggest" aria-label="Matching breeds" hidden></ul>
+
+    <div class="popular" id="popular">
+      <span class="eyebrow" id="breed-hint">Popular at Washers</span>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="sizes" id="sizes" hidden>
+      <p class="sizes-q" id="sizes-q">How big is your dog?</p>
+      <div class="size-opts" id="size-opts"></div>
+    </div>
+
+    <div class="station-note" id="station-note" hidden>
+      <span class="station-badge" id="station-badge"></span>
+      <div>
+        <p><strong id="station-name"></strong></p>
+        <p class="muted" id="station-tub"></p>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary" type="button" id="breed-next" disabled>Continue</button>
+      <span class="helper" id="breed-helper">Tell us the breed to continue.</span>
+    </div>
+  </section>
+
+  <!-- Step 3: Review -->
+  <section class="screen step" data-screen="review" aria-labelledby="review-title" hidden>
+    <div class="progress" data-step="3"></div>
+    <p class="eyebrow">Your booking</p>
+    <h2 id="review-title" tabindex="-1">Does this look correct?</h2>
+    <p class="step-lede">Check the details below before you add any extras.</p>
+
+    <div class="review-grid">
+      <div class="receipt-wrap" id="review-receipt"></div>
+      <div class="review-side">
+        <button class="btn btn-primary" type="button" data-go="extras">Yes, this looks right</button>
+        <p>Something off? You can change it.</p>
+        <div class="edit-links">
+          <button class="btn-text" type="button" data-go="date">Change date or time</button>
+          <button class="btn-text" type="button" data-go="breed">Change breed</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 4: Extras -->
+  <section class="screen step" data-screen="extras" aria-labelledby="extras-title" hidden>
+    <div class="progress" data-step="4"></div>
+    <p class="eyebrow">Almost done</p>
+    <h2 id="extras-title" tabindex="-1">Add some extras?</h2>
+    <p class="step-lede">They'll be waiting at your station. Pick as many as you like.</p>
+
+    <div class="extras" id="extras-list"></div>
+
+    <div class="total-bar">
+      <span class="breakdown" id="total-breakdown"></span>
+      <span>Total <strong id="total-amount"></strong></span>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary" type="button" id="confirm-btn">Confirm booking</button>
+      <button class="btn btn-quiet" type="button" id="skip-btn">No thanks, skip</button>
+    </div>
+  </section>
+
+  <!-- Done -->
+  <section class="screen step" data-screen="done" aria-labelledby="done-title" hidden>
+    <div class="done-mark" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+    <p class="eyebrow">Booking confirmed</p>
+    <h2 id="done-title" tabindex="-1">See you and <span id="done-breed"></span> soon!</h2>
+    <p class="step-lede" id="done-lede"></p>
+
+    <div class="review-grid">
+      <div class="receipt-wrap" id="done-receipt"></div>
+      <div class="review-side">
+        <p>Show this receipt at the front desk and pay at your station. Arrive 5 minutes early so your dog can settle in.</p>
+        <div><button class="btn btn-quiet" type="button" id="again-btn">Book another wash</button></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Data ----------
+  const SIZES = {
+    small:  { label: "Small",  hint: "Under 10 kg / 22 lb", num: "1", station: "Station 1", tub: "Raised small-dog tub", cents: 1400 },
+    medium: { label: "Medium", hint: "10 to 25 kg / 22 to 55 lb", num: "2", station: "Station 2", tub: "Standard tub with hand shower", cents: 1800 },
+    large:  { label: "Large",  hint: "Over 25 kg / 55 lb", num: "4", station: "Station 4", tub: "Walk-in tub with ramp", cents: 2200 }
+  };
+
+  const BREEDS = [
+    ["Chihuahua", "small"], ["Pomeranian", "small"], ["Yorkshire Terrier", "small"], ["Shih Tzu", "small"],
+    ["Maltese", "small"], ["Dachshund", "small"], ["Pug", "small"], ["French Bulldog", "small"],
+    ["Cavalier King Charles Spaniel", "small"], ["Jack Russell Terrier", "small"], ["Miniature Schnauzer", "small"],
+    ["Toy Poodle", "small"], ["Miniature Poodle", "small"], ["Bichon Frise", "small"], ["Boston Terrier", "small"],
+    ["West Highland White Terrier", "small"], ["Papillon", "small"], ["Havanese", "small"],
+    ["Beagle", "medium"], ["Cocker Spaniel", "medium"], ["Border Collie", "medium"], ["Bulldog", "medium"],
+    ["Australian Shepherd", "medium"], ["Pembroke Welsh Corgi", "medium"], ["Shiba Inu", "medium"],
+    ["Staffordshire Bull Terrier", "medium"], ["Whippet", "medium"], ["Cockapoo", "medium"],
+    ["English Springer Spaniel", "medium"], ["Standard Schnauzer", "medium"], ["Basset Hound", "medium"],
+    ["Shetland Sheepdog", "medium"], ["Brittany", "medium"],
+    ["Labrador Retriever", "large"], ["Golden Retriever", "large"], ["German Shepherd", "large"],
+    ["Siberian Husky", "large"], ["Boxer", "large"], ["Rottweiler", "large"], ["Doberman Pinscher", "large"],
+    ["Standard Poodle", "large"], ["Bernese Mountain Dog", "large"], ["Great Dane", "large"],
+    ["Newfoundland", "large"], ["Samoyed", "large"], ["Labradoodle", "large"], ["Goldendoodle", "large"],
+    ["Great Pyrenees", "large"], ["Weimaraner", "large"], ["Alaskan Malamute", "large"], ["Saint Bernard", "large"],
+    ["Mixed breed", null]
+  ].map(([name, size]) => ({ name, size }));
+
+  const POPULAR = ["Labrador Retriever", "French Bulldog", "Golden Retriever", "Dachshund", "Cockapoo", "German Shepherd", "Mixed breed"];
+
+  const EXTRAS = [
+    { id: "massager", name: "Lathering scalp massager", desc: "A soft silicone brush that works shampoo deep into the coat.", cents: 89 },
+    { id: "shampoo", name: "Extra shampoo", desc: "A second bottle of our oatmeal shampoo for thick or muddy coats.", cents: 159 }
+  ];
+
+  // Slot start times in minutes after midnight.
+  const SLOTS = [540, 630, 720, 810, 900, 990, 1080];
+  const BOOK_AHEAD_DAYS = 60;
+
+  // ---------- State ----------
+  const now = new Date();
+  const state = {
+    date: null,       // Date at local midnight
+    slot: null,       // minutes after midnight
+    breed: "",
+    customSize: null, // chosen when breed is unknown or mixed
+    extras: new Set(),
+    ref: null,
+    viewY: now.getFullYear(),
+    viewM: now.getMonth()
+  };
+
+  // ---------- Helpers ----------
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const money = (cents) => "$" + (cents / 100).toFixed(2);
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const sameDay = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  const today = startOfDay(now);
+  const lastDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + BOOK_AHEAD_DAYS);
+
+  const fmtTime = (mins) => {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    const h12 = ((h + 11) % 12) + 1;
+    return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+  };
+  const fmtDateLong = (d) => d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const fmtDateShort = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+
+  const findBreed = (name) => {
+    const q = name.trim().toLowerCase();
+    return q ? BREEDS.find((b) => b.name.toLowerCase() === q) || null : null;
+  };
+  const currentSize = () => {
+    const match = findBreed(state.breed);
+    if (match && match.size) return match.size;
+    return state.breed.trim() ? state.customSize : null;
+  };
+  const displayBreed = () => {
+    const match = findBreed(state.breed);
+    return match ? match.name : state.breed.trim();
+  };
+
+  // A stable, made-up "fully booked" pattern so the calendar feels real.
+  const isFull = (d, i) => ((d.getFullYear() * 7 + d.getMonth() * 31 + d.getDate() * 13 + i * 29) % 11) === 0;
+  const slotState = (d, mins, i) => {
+    if (sameDay(d, today)) {
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      if (mins <= nowMins + 30) return "past";
+    }
+    return isFull(d, i) ? "full" : "open";
+  };
+  const hasOpenSlot = (d) => SLOTS.some((m, i) => slotState(d, m, i) === "open");
+
+  // ---------- Navigation ----------
+  const screens = $$(".screen");
+  const STEP_NAMES = ["Date", "Breed", "Check", "Extras"];
+
+  function go(name) {
+    screens.forEach((s) => {
+      const on = s.dataset.screen === name;
+      s.hidden = !on;
+      s.classList.remove("enter");
+      if (on) { void s.offsetWidth; s.classList.add("enter"); }
+    });
+    if (name === "date") renderDate();
+    if (name === "breed") renderBreed();
+    if (name === "review") renderReview();
+    if (name === "extras") renderExtras();
+    if (name === "done") renderDone();
+    window.scrollTo(0, 0);
+    const heading = $(`[data-screen="${name}"] h2`);
+    if (heading) heading.focus({ preventScroll: true });
+  }
+
+  const BACK = { date: "home", breed: "date", review: "breed", extras: "review" };
+
+  $$(".progress").forEach((el) => {
+    const step = Number(el.dataset.step);
+    const screen = el.closest(".screen").dataset.screen;
+    el.innerHTML = `
+      <button class="progress-back" type="button" data-go="${BACK[screen]}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        Back
+      </button>
+      <div class="progress-meta">
+        <span>Step ${step} of 4 · ${STEP_NAMES[step - 1]}</span>
+        <span class="segments" aria-hidden="true">${[1, 2, 3, 4].map((n) => `<i class="${n <= step ? "on" : ""}"></i>`).join("")}</span>
+      </div>`;
+  });
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-go]");
+    if (btn) go(btn.dataset.go);
+  });
+  $("#logo").addEventListener("click", () => go("home"));
+
+  // ---------- Step 1: Date ----------
+  function renderDate() {
+    const y = state.viewY, m = state.viewM;
+    const first = new Date(y, m, 1);
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    $("#cal-title").textContent = first.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    $("#cal-prev").disabled = y === today.getFullYear() && m === today.getMonth();
+    $("#cal-next").disabled = new Date(y, m + 1, 1) > lastDay;
+
+    let html = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => `<span class="cal-dow">${d}</span>`).join("");
+    for (let i = 0; i < first.getDay(); i++) html += "<span></span>";
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(y, m, d);
+      const disabled = date < today || date > lastDay || !hasOpenSlot(date);
+      const selected = sameDay(date, state.date);
+      const cls = "day" + (sameDay(date, today) ? " today" : "");
+      html += `<button type="button" class="${cls}" data-day="${d}" aria-pressed="${selected}" aria-label="${esc(fmtDateLong(date))}${disabled ? ", unavailable" : ""}"${disabled ? " disabled" : ""}>${d}</button>`;
+    }
+    $("#cal-grid").innerHTML = html;
+    renderSlots();
+  }
+
+  function renderSlots() {
+    const box = $("#slots");
+    if (!state.date) {
+      $("#slots-title").textContent = "Choose a day first";
+      $("#slots-sub").textContent = "Available times will show up here.";
+      box.innerHTML = "";
+    } else {
+      $("#slots-title").textContent = fmtDateLong(state.date);
+      $("#slots-sub").textContent = "Each slot is 30 minutes at your station.";
+      box.innerHTML = SLOTS.map((mins, i) => {
+        const st = slotState(state.date, mins, i);
+        const note = st === "full" ? "<small>Full</small>" : st === "past" ? "<small>Passed</small>" : "";
+        return `<button type="button" class="slot" data-slot="${mins}" aria-pressed="${state.slot === mins}"${st !== "open" ? " disabled" : ""}>${fmtTime(mins)}${note}</button>`;
+      }).join("");
+    }
+    const ready = !!(state.date && state.slot !== null);
+    $("#date-next").disabled = !ready;
+    $("#date-helper").textContent = ready
+      ? `${fmtDateLong(state.date)} at ${fmtTime(state.slot)}`
+      : state.date ? "Now pick a time." : "Choose a day and a time to continue.";
+  }
+
+  $("#cal-prev").addEventListener("click", () => {
+    state.viewM--; if (state.viewM < 0) { state.viewM = 11; state.viewY--; }
+    renderDate();
+  });
+  $("#cal-next").addEventListener("click", () => {
+    state.viewM++; if (state.viewM > 11) { state.viewM = 0; state.viewY++; }
+    renderDate();
+  });
+  $("#cal-grid").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-day]");
+    if (!btn || btn.disabled) return;
+    const date = new Date(state.viewY, state.viewM, Number(btn.dataset.day));
+    if (!sameDay(date, state.date)) {
+      state.date = date;
+      // Keep the chosen time only if it is still open on the new day.
+      if (state.slot !== null) {
+        const i = SLOTS.indexOf(state.slot);
+        if (slotState(date, state.slot, i) !== "open") state.slot = null;
+      }
+    }
+    $$(".day", $("#cal-grid")).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    renderSlots();
+  });
+  $("#slots").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-slot]");
+    if (!btn || btn.disabled) return;
+    state.slot = Number(btn.dataset.slot);
+    renderSlots();
+    const again = $(`[data-slot="${state.slot}"]`);
+    if (again) again.focus();
+  });
+  $("#date-next").addEventListener("click", () => go("breed"));
+
+  // ---------- Step 2: Breed ----------
+  const input = $("#breed-input");
+  const suggest = $("#breed-suggest");
+
+  $("#chips").innerHTML = POPULAR.map((n) => `<button type="button" class="chip" data-breed="${esc(n)}">${esc(n)}</button>`).join("");
+  $("#size-opts").innerHTML = Object.entries(SIZES).map(([key, s]) =>
+    `<button type="button" class="size-opt" data-size="${key}" aria-pressed="false"><b>${s.label}</b><span>${s.hint}</span></button>`
+  ).join("");
+
+  function highlight(name, q) {
+    const i = name.toLowerCase().indexOf(q);
+    if (i < 0 || !q) return esc(name);
+    return esc(name.slice(0, i)) + "<mark>" + esc(name.slice(i, i + q.length)) + "</mark>" + esc(name.slice(i + q.length));
+  }
+
+  function renderSuggest() {
+    const q = state.breed.trim().toLowerCase();
+    const exact = findBreed(state.breed);
+    if (!q || exact) { suggest.hidden = true; suggest.innerHTML = ""; return; }
+    const matches = BREEDS.filter((b) => b.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.toLowerCase().indexOf(q) - b.name.toLowerCase().indexOf(q))
+      .slice(0, 6);
+    if (!matches.length) { suggest.hidden = true; suggest.innerHTML = ""; return; }
+    suggest.innerHTML = matches.map((b) =>
+      `<li><button type="button" data-breed="${esc(b.name)}"><span>${highlight(b.name, q)}</span><small>${b.size ? SIZES[b.size].label : "Any size"}</small></button></li>`
+    ).join("");
+    suggest.hidden = false;
+  }
+
+  function renderBreed() {
+    if (input.value !== state.breed) input.value = state.breed;
+    renderSuggest();
+    const has = !!state.breed.trim();
+    const match = findBreed(state.breed);
+    $("#popular").hidden = has;
+
+    const needSize = has && (!match || !match.size);
+    $("#sizes").hidden = !needSize;
+    if (needSize) {
+      $("#sizes-q").textContent = match
+        ? "Mixed breeds come in all sizes. How big is yours?"
+        : `We'll match ${state.breed.trim()} by size. How big is your dog?`;
+    }
+    $$(".size-opt").forEach((b) => b.setAttribute("aria-pressed", String(needSize && b.dataset.size === state.customSize)));
+
+    const size = currentSize();
+    const note = $("#station-note");
+    note.hidden = !size;
+    if (size) {
+      const s = SIZES[size];
+      $("#station-badge").textContent = s.num;
+      $("#station-name").textContent = `You'll be at ${s.station}`;
+      $("#station-tub").textContent = `${s.tub} · ${s.label} dog wash, ${money(s.cents)}`;
+    }
+    $("#breed-next").disabled = !size;
+    $("#breed-helper").textContent = size ? "" : has ? "Pick a size to continue." : "Tell us the breed to continue.";
+    $("#breed-helper").hidden = !!size;
+  }
+
+  function chooseBreed(name) {
+    state.breed = name;
+    renderBreed();
+    const match = findBreed(name);
+    if (match && !match.size) {
+      const first = $(".size-opt");
+      if (first) first.focus();
+    } else {
+      $("#breed-next").focus();
+    }
+  }
+
+  input.addEventListener("input", () => { state.breed = input.value; renderBreed(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" && !suggest.hidden) {
+      e.preventDefault();
+      const first = $("button", suggest);
+      if (first) first.focus();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (!$("#breed-next").disabled) go("review");
+      else if (!suggest.hidden) { const first = $("button", suggest); if (first) chooseBreed(first.dataset.breed); }
+    }
+  });
+  suggest.addEventListener("keydown", (e) => {
+    const items = $$("button", suggest);
+    const i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); (items[i + 1] || items[0]).focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); i <= 0 ? input.focus() : items[i - 1].focus(); }
+    else if (e.key === "Escape") { input.focus(); }
+  });
+  suggest.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-breed]");
+    if (b) chooseBreed(b.dataset.breed);
+  });
+  $("#chips").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-breed]");
+    if (b) chooseBreed(b.dataset.breed);
+  });
+  $("#size-opts").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-size]");
+    if (!b) return;
+    state.customSize = b.dataset.size;
+    renderBreed();
+  });
+  $("#breed-next").addEventListener("click", () => go("review"));
+
+  // ---------- Receipt ----------
+  function receiptHTML({ final }) {
+    const size = currentSize();
+    const s = SIZES[size];
+    if (!state.ref) state.ref = "WSH-" + String(Math.floor(1000 + Math.random() * 9000));
+    const extras = final ? EXTRAS.filter((x) => state.extras.has(x.id)) : [];
+    const total = s.cents + extras.reduce((sum, x) => sum + x.cents, 0);
+
+    return `
+      <div class="receipt">
+        <div class="r-brand">
+          <strong>Washers</strong>
+          <span>${final ? "Booking confirmed" : "Booking summary"}</span>
+        </div>
+        <hr class="r-rule">
+        <dl class="r-rows">
+          <div class="r-row"><dt>Booking</dt><dd>${esc(state.ref)}</dd></div>
+          <div class="r-row"><dt>Issued</dt><dd>${esc(fmtDateShort(today))}</dd></div>
+        </dl>
+        <hr class="r-rule">
+        <dl class="r-rows">
+          <div class="r-row"><dt>Dog</dt><dd>${esc(displayBreed())}</dd></div>
+          <div class="r-row"><dt>Size</dt><dd>${s.label}</dd></div>
+          <div class="r-row"><dt>Date</dt><dd>${esc(fmtDateShort(state.date))}</dd></div>
+          <div class="r-row"><dt>Time</dt><dd>${fmtTime(state.slot)} to ${fmtTime(state.slot + 30)}</dd></div>
+          <div class="r-row"><dt>Station</dt><dd>${s.station}</dd></div>
+          <div class="r-row"><dt>Tub</dt><dd>${s.tub}</dd></div>
+          <div class="r-row"><dt>Water</dt><dd>38°C</dd></div>
+        </dl>
+        <hr class="r-rule">
+        <div class="r-items">
+          <div class="r-item"><span>${s.label} dog wash<span class="sub">30 min, shampoo included</span></span><span>${money(s.cents)}</span></div>
+          <div class="r-item"><span>Towels and blow dryer</span><span>Included</span></div>
+          ${extras.map((x) => `<div class="r-item"><span>${esc(x.name)}<span class="sub">Extra</span></span><span>${money(x.cents)}</span></div>`).join("")}
+        </div>
+        <hr class="r-rule">
+        <div class="r-total"><span>Total</span><span>${money(total)}</span></div>
+        <div class="r-barcode" aria-hidden="true"></div>
+        <p class="r-foot">Pay at your station · Thank you!</p>
+      </div>`;
+  }
+
+  function renderReview() {
+    if (!state.date || state.slot === null) return go("date");
+    if (!currentSize()) return go("breed");
+    $("#review-receipt").innerHTML = receiptHTML({ final: false });
+  }
+
+  // ---------- Step 4: Extras ----------
+  $("#extras-list").innerHTML = EXTRAS.map((x) => `
+    <label class="extra" for="extra-${x.id}">
+      <input type="checkbox" id="extra-${x.id}" value="${x.id}">
+      <span class="check" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <span><span class="extra-name">${esc(x.name)}</span><span class="extra-desc">${esc(x.desc)}</span></span>
+      <span class="extra-price">${money(x.cents)}</span>
+    </label>`).join("");
+
+  function renderTotals() {
+    const size = currentSize();
+    if (!size) return;
+    const base = SIZES[size].cents;
+    const extra = EXTRAS.filter((x) => state.extras.has(x.id)).reduce((s, x) => s + x.cents, 0);
+    $("#total-breakdown").textContent = extra ? `Wash ${money(base)} + extras ${money(extra)}` : `Wash ${money(base)}`;
+    $("#total-amount").textContent = money(base + extra);
+    const n = state.extras.size;
+    $("#confirm-btn").textContent = n ? `Confirm with ${n} extra${n > 1 ? "s" : ""}` : "Confirm booking";
+    $("#skip-btn").hidden = n > 0;
+  }
+
+  function renderExtras() {
+    if (!state.date || state.slot === null) return go("date");
+    if (!currentSize()) return go("breed");
+    EXTRAS.forEach((x) => { $(`#extra-${x.id}`).checked = state.extras.has(x.id); });
+    renderTotals();
+  }
+
+  $("#extras-list").addEventListener("change", (e) => {
+    const cb = e.target;
+    if (cb.type !== "checkbox") return;
+    cb.checked ? state.extras.add(cb.value) : state.extras.delete(cb.value);
+    renderTotals();
+  });
+  $("#confirm-btn").addEventListener("click", () => go("done"));
+  $("#skip-btn").addEventListener("click", () => { state.extras.clear(); go("done"); });
+
+  // ---------- Done ----------
+  function renderDone() {
+    if (!state.date || state.slot === null) return go("date");
+    if (!currentSize()) return go("breed");
+    const match = findBreed(state.breed);
+    $("#done-breed").textContent = match && match.size ? "your " + match.name : "your pup";
+    $("#done-lede").textContent = `${fmtDateLong(state.date)} at ${fmtTime(state.slot)}, ${SIZES[currentSize()].station}.`;
+    $("#done-receipt").innerHTML = receiptHTML({ final: true });
+  }
+
+  $("#again-btn").addEventListener("click", () => {
+    Object.assign(state, { date: null, slot: null, breed: "", customSize: null, ref: null, viewY: today.getFullYear(), viewM: today.getMonth() });
+    state.extras.clear();
+    go("date");
+  });
+})();
+</script>
+</body>
+</html>

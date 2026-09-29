@@ -13,6 +13,18 @@ npm start
 
 Open http://localhost:3000.
 
+## Meadowlight
+
+`public/field.html` is a small walking game: an endless field of wind-blown grass
+with a day and night cycle, synthesised birdsong and crickets, and seven wildflower
+species to find for your field journal. With the server running, open
+http://localhost:3000/field.html, or open the file directly in a browser.
+It is a single self-contained page (three.js loads from cdnjs).
+
+Controls: WASD or arrow keys to walk, Shift to run, mouse to look, E to pick a
+flower, J for the journal, 1–4 to jump between dawn, noon, golden hour and night.
+On a phone, the left thumb walks and the right thumb looks around.
+
 ## How it works
 
 - `server.js` — an Express server with one route, `POST /api/chat`, that streams

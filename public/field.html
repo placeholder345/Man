@@ -1,0 +1,2030 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meadowlight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..800,0..100,0..1;1,9..144,300..800,0..100,0..1&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<style>
+/* Layout: a full-bleed WebGL field; glass HUD pinned to the corners; journal and settings slide in from the right */
+:root {
+  --ink: #f7f0e1;
+  --ink-dim: rgba(247, 240, 225, .72);
+  --ink-faint: rgba(247, 240, 225, .46);
+  --glass: rgba(22, 26, 18, .46);
+  --glass-deep: rgba(15, 18, 13, .86);
+  --edge: rgba(255, 236, 200, .16);
+  --pollen: #f2c35a;
+  --pollen-ink: #2a1f08;
+  --poppy: #e0533a;
+  --night: #0b1120;
+  --display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --body: "Hanken Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--ink); font-family: var(--body); font-size: 14px; -webkit-font-smoothing: antialiased; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+.vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(8, 10, 6, .38) 100%); }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--pollen); outline-offset: 2px; }
+.glass { background: var(--glass); border: 1px solid var(--edge); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
+.kbd { display: inline-grid; place-items: center; min-width: 1.7em; height: 1.7em; padding: 0 .4em; border-radius: 6px; border: 1px solid rgba(255, 236, 200, .3); border-bottom-width: 2px; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--ink); background: rgba(255, 255, 255, .06); box-sizing: border-box; }
+
+/* ---------- HUD ---------- */
+.hud { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .8s ease; }
+.hud.on { opacity: 1; }
+.hud > * { pointer-events: auto; }
+.brand { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: calc(16px + env(safe-area-inset-left, 0px)); display: grid; gap: 2px; padding: 10px 14px 11px; border-radius: 14px; }
+.brand-name { font-family: var(--display); font-style: italic; font-size: 21px; font-weight: 420; letter-spacing: -.01em; font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 48; line-height: 1.05; }
+.brand-time { font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.brand-time b { color: var(--ink); font-weight: 600; }
+.compass { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(300px, calc(100vw - 280px)); height: 34px; border-radius: 999px; overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+.compass::after { content: ""; position: absolute; left: 50%; top: 4px; width: 1px; height: 7px; background: var(--pollen); }
+.cmark { position: absolute; top: 0; left: 0; height: 100%; display: grid; place-items: center; font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--ink-dim); will-change: transform; }
+.cmark.tick::before { content: ""; width: 1px; height: 6px; background: var(--ink-faint); margin-top: 6px; }
+.cmark.major { color: var(--ink); font-size: 12px; }
+.cmark.sun { color: var(--pollen); }
+.cmark.sun i { width: 9px; height: 9px; border-radius: 50%; background: var(--pollen); box-shadow: 0 0 10px 2px rgba(242, 195, 90, .7); }
+.cmark.moon i { width: 8px; height: 8px; border-radius: 50%; background: #dfe6f5; box-shadow: 0 0 8px 1px rgba(210, 222, 245, .6); }
+@media (max-width: 620px) { .compass { top: calc(74px + env(safe-area-inset-top, 0px)); width: min(260px, calc(100vw - 48px)); } }
+.tools { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+.tool { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 13px; border-radius: 999px; cursor: pointer; font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; transition: background .2s, transform .2s; }
+.tool:hover { background: rgba(40, 46, 32, .62); }
+.tool:active { transform: scale(.97); }
+.tool svg { width: 18px; height: 18px; flex: none; }
+.tool .count b { font-weight: 600; }
+.tool.icon-only { width: 40px; padding: 0; justify-content: center; }
+.hint { position: absolute; left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 10px 14px; border-radius: 12px; display: grid; gap: 6px; font-size: 12px; color: var(--ink-dim); transition: opacity 1.2s ease; max-width: calc(100vw - 32px); box-sizing: border-box; }
+.hint.fade { opacity: 0; pointer-events: none; }
+.hint-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.prompt { position: absolute; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); opacity: 0; transition: opacity .25s, transform .25s; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-radius: 999px; font-size: 14px; white-space: nowrap; pointer-events: none; }
+.prompt.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.prompt em { font-family: var(--display); font-style: italic; font-size: 16px; font-weight: 450; }
+.pick-btn { height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--pollen); color: var(--pollen-ink); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.pick-btn .kbd { border-color: rgba(42, 31, 8, .35); color: var(--pollen-ink); background: rgba(255, 255, 255, .25); }
+.toast { position: absolute; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 10px); width: min(420px, calc(100vw - 32px)); box-sizing: border-box; padding: 14px 18px 15px; border-radius: 16px; opacity: 0; transition: opacity .5s, transform .5s; pointer-events: none; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast .sw { grid-row: span 3; width: 48px; height: 48px; }
+.toast .t-eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--pollen); font-weight: 600; }
+.toast .t-title { font-family: var(--display); font-size: 22px; font-weight: 450; line-height: 1.1; font-variation-settings: "SOFT" 60, "opsz" 36; }
+.toast .t-title i { font-weight: 350; font-size: 15px; color: var(--ink-dim); margin-left: 4px; }
+.toast .t-note { font-size: 13px; line-height: 1.45; color: var(--ink-dim); }
+.lockchip { position: absolute; left: 50%; top: 50%; transform: translate(-50%, 40px); padding: 8px 14px; border-radius: 999px; font-size: 12px; color: var(--ink-dim); pointer-events: none; transition: opacity .4s; }
+.crosshair { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: rgba(255, 248, 230, .7); box-shadow: 0 0 0 1px rgba(0, 0, 0, .15); pointer-events: none; transition: transform .2s, background .2s; }
+.crosshair.near { transform: scale(2.2); background: var(--pollen); }
+
+/* ---------- Panels ---------- */
+.panel { position: fixed; top: calc(66px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); width: min(380px, calc(100vw - 32px)); max-height: calc(100% - 90px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); box-sizing: border-box; overflow: auto; border-radius: 18px; padding: 18px 18px 16px; background: var(--glass-deep); border: 1px solid var(--edge); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); transform: translateX(16px); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; }
+.panel.on { opacity: 1; transform: none; pointer-events: auto; }
+.panel h2 { margin: 0; font-family: var(--display); font-weight: 450; font-size: 26px; letter-spacing: -.01em; font-variation-settings: "SOFT" 80, "opsz" 48; text-wrap: balance; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.panel-sub { margin: 0 0 14px; color: var(--ink-dim); font-size: 13px; line-height: 1.5; }
+.close { border: 0; background: transparent; color: var(--ink-dim); cursor: pointer; font-size: 13px; padding: 4px 2px; }
+.close:hover { color: var(--ink); }
+.progress { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-bottom: 14px; }
+.progress i { display: block; height: 100%; background: var(--pollen); border-radius: 4px; transition: width .6s ease; }
+.species { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.sp { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 8px 8px; border-radius: 12px; }
+.sp.found { background: rgba(255, 255, 255, .04); }
+.sp svg { width: 44px; height: 44px; }
+.sp-text { min-width: 0; display: grid; gap: 1px; }
+.sp-name { font-family: var(--display); font-size: 17px; font-weight: 450; line-height: 1.2; font-variation-settings: "SOFT" 60, "opsz" 24; }
+.sp-latin { font-family: var(--display); font-style: italic; font-size: 13px; color: var(--ink-dim); font-weight: 350; }
+.sp-hint { font-size: 12px; color: var(--ink-faint); line-height: 1.4; }
+.sp:not(.found) .sp-name { color: var(--ink-dim); }
+.sp-count { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--pollen); font-weight: 600; }
+.panel-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--edge); display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-faint); flex-wrap: wrap; }
+.linkbtn { border: 0; background: none; color: var(--ink-dim); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 12px; padding: 2px 0; }
+.linkbtn.danger { color: var(--poppy); }
+.field { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--edge); }
+.field:first-of-type { border-top: 0; padding-top: 4px; }
+.field-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); font-weight: 600; }
+.field-label output { font-family: var(--display); font-size: 16px; letter-spacing: 0; text-transform: none; color: var(--ink); font-weight: 450; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--pollen); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--edge); background: rgba(255, 255, 255, .05); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.chip:hover { background: rgba(255, 255, 255, .1); }
+.chip[aria-pressed="true"] { background: var(--pollen); color: var(--pollen-ink); border-color: var(--pollen); font-weight: 600; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-dim); cursor: pointer; }
+.check input { accent-color: var(--pollen); width: 16px; height: 16px; }
+
+/* ---------- Intro ---------- */
+.intro { position: fixed; inset: 0; display: flex; align-items: flex-end; box-sizing: border-box; padding: 24px max(20px, 6vw) max(40px, 9vh); background: linear-gradient(to top, rgba(9, 11, 6, .8), rgba(9, 11, 6, .3) 48%, rgba(9, 11, 6, 0) 75%); transition: opacity .9s ease; }
+.intro.gone { opacity: 0; pointer-events: none; }
+.intro-inner { max-width: 640px; display: grid; gap: 18px; }
+.intro h1 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 380; font-size: clamp(58px, 12vw, 150px); line-height: .88; letter-spacing: -.025em; font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; text-shadow: 0 2px 40px rgba(0, 0, 0, .25); }
+.intro .tag { margin: 0; font-family: var(--display); font-size: clamp(19px, 2.4vw, 25px); font-weight: 350; line-height: 1.3; font-variation-settings: "SOFT" 50, "opsz" 24; text-wrap: balance; }
+.intro .lede { margin: 0; color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 52ch; }
+.intro-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 4px; }
+.begin { height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--pollen); color: var(--pollen-ink); font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 40px -10px rgba(242, 195, 90, .7); transition: transform .2s, box-shadow .2s; display: inline-flex; align-items: center; gap: 10px; }
+.begin:hover { transform: translateY(-2px); box-shadow: 0 16px 44px -10px rgba(242, 195, 90, .85); }
+.begin svg { width: 18px; height: 18px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: var(--ink-dim); }
+.controls span { display: inline-flex; align-items: center; gap: 6px; }
+.fatal { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; box-sizing: border-box; text-align: left; }
+.fatal div { max-width: 440px; }
+.fatal h2 { font-family: var(--display); font-weight: 400; font-size: 32px; margin: 0 0 8px; }
+.fatal p { color: var(--ink-dim); line-height: 1.6; margin: 0; }
+
+/* ---------- Touch stick ---------- */
+.stick { position: fixed; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 1px solid var(--edge); background: rgba(20, 24, 16, .25); pointer-events: none; }
+.stick i { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: rgba(247, 240, 225, .35); }
+@media (prefers-reduced-motion: reduce) { .hud, .intro, .panel, .toast, .prompt, .hint { transition: none; } }
+</style>
+
+<canvas id="scene" tabindex="0" aria-label="A wide field of grass and wildflowers"></canvas>
+<div class="vignette"></div>
+
+<div class="hud" id="hud">
+  <div class="brand glass">
+    <div class="brand-name">Meadowlight</div>
+    <div class="brand-time"><b id="clock">17:20</b> · <span id="phase">Golden hour</span></div>
+  </div>
+  <div class="compass glass" id="compass" aria-hidden="true"></div>
+  <div class="tools">
+    <button class="tool glass" id="btnJournal" aria-label="Open field journal" aria-controls="journal" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5v-13Z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5v-13Z"/></svg>
+      <span class="count"><b id="foundCount">0</b>/7</span>
+    </button>
+    <button class="tool glass icon-only" id="btnSettings" aria-label="Open settings" aria-controls="settings" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+    <button class="tool glass icon-only" id="btnSound" aria-label="Mute sound" aria-pressed="false">
+      <svg id="icoSound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path id="icoWaves" d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path id="icoMute" d="M16 9.5l5 5M21 9.5l-5 5" hidden/></svg>
+    </button>
+  </div>
+  <div class="crosshair" id="crosshair"></div>
+  <div class="lockchip glass" id="lockchip" hidden>Click the field to look around</div>
+  <div class="hint glass" id="hint">
+    <div class="hint-row" data-desktop><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> walk <span class="kbd">Shift</span> run <span class="kbd">Space</span> hop</div>
+    <div class="hint-row" data-desktop><span class="kbd">E</span> pick <span class="kbd">J</span> journal <span class="kbd">1</span>–<span class="kbd">4</span> time of day</div>
+    <div class="hint-row" data-touch hidden>Left thumb walks, right thumb looks around.</div>
+    <div class="hint-row">Follow the sparkles to find wildflowers.</div>
+  </div>
+  <div class="toast glass" id="toast" role="status" aria-live="polite"></div>
+  <div class="prompt glass" id="prompt">
+    <span id="promptText">Pick this wildflower</span>
+    <button class="pick-btn" id="pickBtn"><span class="kbd" data-desktop>E</span>Pick</button>
+  </div>
+</div>
+
+<aside class="panel" id="journal" aria-label="Field journal">
+  <div class="panel-head"><h2>Field journal</h2><button class="close" data-close>Close</button></div>
+  <p class="panel-sub" id="journalSub">Seven wildflowers grow in this field. Each one keeps to its own kind of ground.</p>
+  <div class="progress"><i id="journalBar" style="width:0%"></i></div>
+  <ul class="species" id="speciesList"></ul>
+  <div class="panel-foot">
+    <span id="pickedTotal">0 flowers picked</span>
+    <span><button class="linkbtn" id="resetJournal">Start a new journal</button><button class="linkbtn danger" id="resetConfirm" hidden>Erase every entry</button></span>
+  </div>
+</aside>
+
+<aside class="panel" id="settings" aria-label="Settings">
+  <div class="panel-head"><h2>The field</h2><button class="close" data-close>Close</button></div>
+  <div class="field">
+    <label class="field-label" for="timeRange">Time of day <output id="timeOut">17:20</output></label>
+    <input type="range" id="timeRange" min="0" max="23.99" step="0.01" value="17.33">
+    <div class="chips">
+      <button class="chip" data-time="5.6">Dawn</button>
+      <button class="chip" data-time="12.5">Noon</button>
+      <button class="chip" data-time="17.33">Golden hour</button>
+      <button class="chip" data-time="23">Night</button>
+    </div>
+    <label class="check"><input type="checkbox" id="timeFlow" checked> Let the day pass</label>
+  </div>
+  <div class="field">
+    <label class="field-label" for="windRange">Wind <output id="windOut">Breezy</output></label>
+    <input type="range" id="windRange" min="0" max="1.6" step="0.01" value="0.85">
+  </div>
+  <div class="field">
+    <span class="field-label">Grass density</span>
+    <div class="chips" id="qualityChips">
+      <button class="chip" data-q="low">Light</button>
+      <button class="chip" data-q="high">Lush</button>
+      <button class="chip" data-q="ultra">Overgrown</button>
+    </div>
+  </div>
+  <div class="field">
+    <label class="field-label" for="volRange">Sound <output id="volOut">70%</output></label>
+    <input type="range" id="volRange" min="0" max="1" step="0.01" value="0.7">
+  </div>
+  <div class="field">
+    <label class="field-label" for="sensRange">Look speed <output id="sensOut">1.0×</output></label>
+    <input type="range" id="sensRange" min="0.4" max="2.2" step="0.05" value="1">
+  </div>
+</aside>
+
+<div class="intro" id="intro">
+  <div class="intro-inner">
+    <h1>Meadowlight</h1>
+    <p class="tag">Long grass, low sun, and seven wildflowers to find.</p>
+    <p class="lede">Wander a field that goes on for as long as you keep walking. Poppies lean over the footpath, the wind runs through the grass in waves, and fireflies come out after dark.</p>
+    <div class="intro-actions">
+      <button class="begin" id="begin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span id="beginLabel">Begin walking</span></button>
+      <div class="controls" id="introControls">
+        <span><span class="kbd">WASD</span> walk</span>
+        <span><span class="kbd">Mouse</span> look</span>
+        <span><span class="kbd">E</span> pick</span>
+        <span><span class="kbd">J</span> journal</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stick" id="stick" hidden><i id="stickKnob"></i></div>
+<div class="fatal" id="fatal" hidden><div><h2>The field could not load</h2><p>This page needs WebGL. Try a recent version of Chrome, Safari, Edge, or Firefox.</p></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* =========================================================================
+   Basics
+   ========================================================================= */
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = matchMedia('(pointer: coarse)').matches;
+
+function fatal(msg) {
+  const el = $('#fatal'); el.hidden = false;
+  if (msg) el.querySelector('p').textContent = msg;
+  $('#intro').hidden = true; $('#hud').hidden = true;
+}
+if (!window.THREE) { fatal('The 3D engine could not load. Check your connection and reload the page.'); return; }
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+};
+
+/* =========================================================================
+   World functions (mirrored exactly in GLSL below)
+   ========================================================================= */
+function terrainH(x, z) {
+  return Math.sin(x * 0.021) * Math.cos(z * 0.017) * 5.0
+       + Math.sin(x * 0.047 + z * 0.031 + 1.3) * 2.2
+       + Math.cos(x * 0.011 - z * 0.013 + 0.7) * 7.0
+       + Math.sin(x * 0.13 + Math.cos(z * 0.09)) * 0.35;
+}
+const pathX = (z) => Math.sin(z * 0.013) * 38 + Math.sin(z * 0.037 + 0.5) * 9;
+const pathDX = (z) => Math.cos(z * 0.013) * 0.494 + Math.cos(z * 0.037 + 0.5) * 0.333;
+const pathDist = (x, z) => { const s = pathDX(z); return Math.abs(x - pathX(z)) / Math.sqrt(1 + s * s); };
+function zoneF(x, z) {
+  const v = Math.sin(x * 0.018 + Math.sin(z * 0.023) * 1.7) * Math.cos(z * 0.015 - x * 0.006);
+  return smooth(-0.25, 0.35, v);
+}
+// JS value noise, used for audio gusts only
+function hash2(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
+function noise1(t) { const i = Math.floor(t), f = t - i, u = f * f * (3 - 2 * f); return lerp(hash2(i, 0.5), hash2(i + 1, 0.5), u); }
+
+const GLSL_COMMON = `
+float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+float terrainH(vec2 p) {
+  return sin(p.x * 0.021) * cos(p.y * 0.017) * 5.0
+       + sin(p.x * 0.047 + p.y * 0.031 + 1.3) * 2.2
+       + cos(p.x * 0.011 - p.y * 0.013 + 0.7) * 7.0
+       + sin(p.x * 0.13 + cos(p.y * 0.09)) * 0.35;
+}
+float pathDist(vec2 p) {
+  float px = sin(p.y * 0.013) * 38.0 + sin(p.y * 0.037 + 0.5) * 9.0;
+  float dx = cos(p.y * 0.013) * 0.494 + cos(p.y * 0.037 + 0.5) * 0.333;
+  return abs(p.x - px) / sqrt(1.0 + dx * dx);
+}
+float zoneF(vec2 p) {
+  float v = sin(p.x * 0.018 + sin(p.y * 0.023) * 1.7) * cos(p.y * 0.015 - p.x * 0.006);
+  return smoothstep(-0.25, 0.35, v);
+}
+`;
+
+const GLSL_LIGHT = `
+uniform vec3 uLightDir; uniform vec3 uLightCol; uniform vec3 uAmbSky; uniform vec3 uAmbGround;
+uniform vec3 uHorizon; uniform vec3 uSunDir; uniform vec3 uSunGlow; uniform float uFogDensity; uniform float uNight;
+vec3 ambient(vec3 n) { return mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5); }
+vec3 fogColor(vec3 v) { float s = max(dot(v, uSunDir), 0.0); return uHorizon + uSunGlow * pow(s, 6.0) * 0.28 * (1.0 - uNight); }
+vec3 applyFog(vec3 col, vec3 wpos) {
+  vec3 d = wpos - cameraPosition; float dist = max(length(d), 0.001);
+  float f = 1.0 - exp(-uFogDensity * uFogDensity * dist * dist);
+  return mix(col, fogColor(d / dist), clamp(f, 0.0, 1.0));
+}
+vec3 grade(vec3 c) {
+  c = max(c, vec3(0.0));
+  c = c / (1.0 + c * 0.22) * 1.1;
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  return mix(vec3(l), c, 1.1);
+}
+`;
+
+// Wind + trampling, shared by grass and flowers. Needs: wxz, aRand, uniforms.
+const GLSL_BEND = `
+  vec2 wp = wxz * 0.045 - uWind * uTime * 0.9;
+  float gust = vnoise(wp) * 0.65 + vnoise(wp * 2.3 + 7.1) * 0.35;
+  gust = smoothstep(0.25, 0.85, gust);
+  float flutter = sin(uTime * (1.8 + aRand.z * 1.6) + aRand.z * 30.0 + wxz.x * 0.35 + wxz.y * 0.2) * 0.07;
+  float ang = aRand.y * 6.28318;
+  vec2 facing = vec2(cos(ang), sin(ang));
+  float bend = BEND_BASE + aRand.w * 0.2 + gust * BEND_GUST * uWindStrength + flutter * (0.5 + uWindStrength);
+  vec2 bdir = normalize(uWind + facing * 0.35);
+  float tr = 0.0; vec2 tdir = vec2(0.0);
+  for (int i = 0; i < 12; i++) {
+    vec3 t = uTrail[i];
+    vec2 d = wxz - t.xy;
+    float l = length(d);
+    float s = t.z * (1.0 - smoothstep(0.2, 1.05, l));
+    if (s > tr) { tr = s; tdir = d / max(l, 0.001); }
+  }
+  bdir = normalize(mix(bdir, tdir, clamp(tr * 1.6, 0.0, 1.0)) + vec2(0.0001));
+  bend = mix(bend, 1.45, tr);
+  float b = max(bend, 0.02);
+`;
+
+/* =========================================================================
+   Settings & journal state
+   ========================================================================= */
+const QUALITY = {
+  low:   { near: 50000,  far: 26000, flowers: 4000,  dpr: 1 },
+  high:  { near: 110000, far: 55000, flowers: 7500,  dpr: 1.5 },
+  ultra: { near: 180000, far: 90000, flowers: 11000, dpr: 2 }
+};
+const MAXQ = QUALITY.ultra;
+const saved = store.get('meadowlight.settings.v1', {});
+const settings = {
+  quality: QUALITY[saved.quality] ? saved.quality : (coarse ? 'low' : 'high'),
+  qualityChosen: !!saved.quality,
+  volume: typeof saved.volume === 'number' ? saved.volume : 0.7,
+  muted: !!saved.muted,
+  sens: typeof saved.sens === 'number' ? saved.sens : 1,
+  wind: typeof saved.wind === 'number' ? saved.wind : 0.85,
+  timeFlow: saved.timeFlow !== false
+};
+function saveSettings() {
+  store.set('meadowlight.settings.v1', {
+    quality: settings.qualityChosen ? settings.quality : undefined,
+    volume: settings.volume, muted: settings.muted, sens: settings.sens, wind: settings.wind, timeFlow: settings.timeFlow
+  });
+}
+
+const SPECIES = [
+  { id: 'poppy', name: 'Common poppy', latin: 'Papaver rhoeas', color: '#d8291c', hint: 'Scattered through the golden grass.',
+    note: 'Its seeds can lie in the soil for decades, waiting for the ground to be turned.' },
+  { id: 'cornflower', name: 'Cornflower', latin: 'Centaurea cyanus', color: '#3f63e0', hint: 'Keeps close to the footpath.',
+    note: 'Once a common weed of wheat fields, now scarce in the wild across much of Europe.' },
+  { id: 'daisy', name: 'Oxeye daisy', latin: 'Leucanthemum vulgare', color: '#f4f1e6', hint: 'Out in the green meadow grass.',
+    note: 'Each flower head is made of many tiny florets packed together.' },
+  { id: 'buttercup', name: 'Meadow buttercup', latin: 'Ranunculus acris', color: '#f7cf1d', hint: 'Down in the low, damp hollows.',
+    note: 'Its sap is bitter and irritating, so grazing cattle leave it standing.' },
+  { id: 'clover', name: 'Red clover', latin: 'Trifolium pratense', color: '#c64a7e', hint: 'Almost anywhere, if you look down.',
+    note: 'Bacteria in its roots fix nitrogen, feeding the soil for the grasses around it.' },
+  { id: 'lupine', name: 'Garden lupine', latin: 'Lupinus polyphyllus', color: '#7a5cc9', hint: 'In the shade beneath the trees.',
+    note: 'A garden escape that now spreads along roadsides and into meadows.' },
+  { id: 'orchid', name: 'Bee orchid', latin: 'Ophrys apifera', color: '#e7a4c4', hint: 'Rare. Only on the highest, driest ground.',
+    note: 'Its lip mimics a female bee, yet in northern Europe it almost always pollinates itself.' }
+];
+const SP = Object.fromEntries(SPECIES.map((s, i) => [s.id, Object.assign(s, { index: i })]));
+let journal = store.get('meadowlight.journal.v1', {});
+if (typeof journal !== 'object' || !journal) journal = {};
+const foundCount = () => SPECIES.filter((s) => journal[s.id] > 0).length;
+
+/* =========================================================================
+   Renderer, camera, scene
+   ========================================================================= */
+const canvas = $('#scene');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch (e) { fatal(); return; }
+if (!renderer.getContext()) { fatal(); return; }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[settings.quality].dpr));
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 3400);
+camera.rotation.order = 'YXZ';
+
+const U = {
+  uTime: { value: 0 },
+  uLightDir: { value: new THREE.Vector3(0, 1, 0) },
+  uLightCol: { value: new THREE.Vector3(1, 1, 1) },
+  uAmbSky: { value: new THREE.Vector3(0.5, 0.6, 0.7) },
+  uAmbGround: { value: new THREE.Vector3(0.2, 0.2, 0.1) },
+  uHorizon: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
+  uZenith: { value: new THREE.Vector3(0.2, 0.4, 0.8) },
+  uSunDir: { value: new THREE.Vector3(0, 1, 0) },
+  uMoonDir: { value: new THREE.Vector3(0, -1, 0) },
+  uSunGlow: { value: new THREE.Vector3(1, 0.7, 0.4) },
+  uCloudLit: { value: new THREE.Vector3(1, 1, 1) },
+  uCloudShade: { value: new THREE.Vector3(0.6, 0.6, 0.7) },
+  uFogDensity: { value: 0.0036 },
+  uNight: { value: 0 },
+  uWind: { value: new THREE.Vector2(0.8, 0.6) },
+  uWindStrength: { value: 0.85 },
+  uPlayer: { value: new THREE.Vector3() },
+  uTrail: { value: Array.from({ length: 12 }, () => new THREE.Vector3(0, 0, 0)) },
+  uPx: { value: 800 }
+};
+const withU = (extra) => Object.assign({}, U, extra || {});
+
+/* =========================================================================
+   Sky
+   ========================================================================= */
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(3000, 48, 24),
+  new THREE.ShaderMaterial({
+    uniforms: withU(),
+    side: THREE.BackSide, depthWrite: false, depthTest: false,
+    vertexShader: `
+      varying vec3 vDir;
+      void main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `
+      uniform vec3 uZenith; uniform vec3 uMoonDir; uniform vec3 uCloudLit; uniform vec3 uCloudShade; uniform float uTime;
+      varying vec3 vDir;
+      ${GLSL_COMMON}
+      ${GLSL_LIGHT}
+      float fbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * vnoise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return s; }
+      float hash13(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+      void main() {
+        vec3 d = normalize(vDir);
+        float h = d.y;
+        float sd = dot(d, uSunDir);
+        vec3 col = mix(uHorizon, uZenith, pow(clamp(h, 0.0, 1.0), 0.48));
+        float day = 1.0 - uNight;
+        float s = max(sd, 0.0);
+        col += uSunGlow * (pow(s, 6.0) * 0.28 + pow(s, 48.0) * 0.45 + pow(s, 400.0) * 0.9) * day;
+        float sunVis = smoothstep(-0.03, 0.01, uSunDir.y);
+        col += vec3(1.7, 1.45, 1.1) * smoothstep(0.99955, 0.99975, sd) * sunVis;
+        // stars and moon
+        if (uNight > 0.01 && h > 0.0) {
+          vec3 sp = d * 320.0;
+          vec3 cell = floor(sp);
+          float r = hash13(cell);
+          float star = step(0.9965, r) * smoothstep(0.42, 0.08, length(fract(sp) - 0.5));
+          float tw = 0.65 + 0.35 * sin(uTime * (2.0 + r * 5.0) + r * 60.0);
+          col += vec3(0.9, 0.93, 1.0) * star * tw * uNight * smoothstep(0.0, 0.2, h) * (0.5 + 1.5 * fract(r * 91.7));
+          float band = exp(-pow(dot(d, normalize(vec3(0.3, 0.2, 0.93))) * 3.2, 2.0));
+          col += vec3(0.1, 0.11, 0.17) * band * fbm(d.xz * 7.0 + d.y * 3.0) * uNight;
+        }
+        float md = dot(d, uMoonDir);
+        col += vec3(0.95, 0.93, 0.86) * smoothstep(0.99925, 0.99945, md) * uNight;
+        col += vec3(0.35, 0.4, 0.55) * pow(max(md, 0.0), 80.0) * 0.35 * uNight;
+        // clouds
+        if (h > 0.0) {
+          vec2 uv = d.xz / (h * 1.35 + 0.09) * 0.75 + vec2(uTime * 0.006, uTime * 0.0025);
+          float n = fbm(uv);
+          float cov = smoothstep(0.5, 0.78, n) * smoothstep(0.0, 0.2, h);
+          vec3 cc = mix(uCloudShade, uCloudLit, smoothstep(0.45, 0.85, n));
+          cc += uSunGlow * pow(s, 4.0) * 0.5 * day;
+          col = mix(col, cc, cov * 0.88);
+          col += uSunGlow * pow(s, 14.0) * cov * (1.0 - cov) * 2.2 * day;
+        }
+        col = mix(col, fogColor(d), exp(-abs(h) * 16.0) * 0.55);
+        col = grade(col);
+        col += (hash12(gl_FragCoord.xy) - 0.5) / 180.0;
+        gl_FragColor = vec4(col, 1.0);
+      }`
+  })
+);
+sky.renderOrder = -10;
+sky.frustumCulled = false;
+scene.add(sky);
+
+/* =========================================================================
+   Distant hills (two rings that follow the camera, so they feel infinitely far)
+   ========================================================================= */
+function makeRing(radius, seed, base, amp, haze, color) {
+  const N = 360, pos = [], top = [], idx = [];
+  for (let i = 0; i <= N; i++) {
+    const th = (i / N) * Math.PI * 2;
+    let h = base + amp * (0.5 * Math.sin(3 * th + seed) + 0.32 * Math.sin(7 * th + seed * 2.1)
+      + 0.2 * Math.sin(13 * th + seed * 0.7) + 0.09 * Math.sin(29 * th + seed * 3.3) + 0.05 * Math.sin(61 * th + seed));
+    h = Math.max(h, base * 0.25);
+    const x = Math.sin(th) * radius, z = Math.cos(th) * radius;
+    pos.push(x, -80, z, x, h, z); top.push(0, 1);
+    if (i < N) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('aTop', new THREE.Float32BufferAttribute(top, 1));
+  g.setIndex(idx);
+  const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
+    uniforms: withU({ uHaze: { value: haze }, uCol: { value: new THREE.Color(color) } }),
+    side: THREE.DoubleSide, depthWrite: false,
+    vertexShader: `
+      attribute float aTop; varying float vTop; varying vec3 vW;
+      void main() { vTop = aTop; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `
+      uniform float uHaze; uniform vec3 uCol; varying float vTop; varying vec3 vW;
+      ${GLSL_LIGHT}
+      void main() {
+        vec3 v = normalize(vW - cameraPosition);
+        vec3 lit = uCol * (uAmbSky * 1.1 + uLightCol * 0.35);
+        float hz = clamp(uHaze + (1.0 - vTop) * 0.3, 0.0, 1.0);
+        vec3 col = mix(lit, fogColor(v), hz);
+        gl_FragColor = vec4(grade(col), 1.0);
+      }`
+  }));
+  m.renderOrder = -9 + seed * 0.01;
+  m.frustumCulled = false;
+  return m;
+}
+const ringFar = makeRing(2500, 1.3, 150, 170, 0.78, '#4a5a70');
+const ringNear = makeRing(1850, 4.1, 70, 110, 0.6, '#3d5840');
+ringFar.renderOrder = -9; ringNear.renderOrder = -8;
+scene.add(ringFar, ringNear);
+
+/* =========================================================================
+   Terrain (a grid that snaps to the player; heights come from the shader)
+   ========================================================================= */
+const TERR_SIZE = 1100, TERR_SEG = 240, TERR_STEP = TERR_SIZE / TERR_SEG;
+const terrainGeo = new THREE.PlaneGeometry(TERR_SIZE, TERR_SIZE, TERR_SEG, TERR_SEG);
+terrainGeo.rotateX(-Math.PI / 2);
+const terrainMat = new THREE.ShaderMaterial({
+  uniforms: withU({ uOrigin: { value: new THREE.Vector2() } }),
+  vertexShader: `
+    uniform vec2 uOrigin; varying vec3 vW; varying vec3 vN;
+    ${GLSL_COMMON}
+    void main() {
+      vec2 xz = position.xz + uOrigin;
+      float h = terrainH(xz);
+      float e = 0.8;
+      float hx = terrainH(xz + vec2(e, 0.0)) - terrainH(xz - vec2(e, 0.0));
+      float hz = terrainH(xz + vec2(0.0, e)) - terrainH(xz - vec2(0.0, e));
+      vN = normalize(vec3(-hx, 2.0 * e, -hz));
+      vW = vec3(xz.x, h, xz.y);
+      gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0);
+    }`,
+  fragmentShader: `
+    varying vec3 vW; varying vec3 vN;
+    ${GLSL_COMMON}
+    ${GLSL_LIGHT}
+    void main() {
+      vec3 N = normalize(vN);
+      float zone = zoneF(vW.xz);
+      float pd = pathDist(vW.xz);
+      float n = vnoise(vW.xz * 0.35) * 0.5 + vnoise(vW.xz * 1.7) * 0.5;
+      vec3 soil = mix(vec3(0.12, 0.21, 0.06), vec3(0.34, 0.29, 0.12), zone) * (0.78 + 0.4 * n);
+      float dist = distance(cameraPosition.xz, vW.xz);
+      vec3 farTop = mix(vec3(0.3, 0.47, 0.15), vec3(0.8, 0.66, 0.34), zone) * (0.82 + 0.25 * vnoise(vW.xz * 0.05));
+      soil = mix(soil, farTop, smoothstep(22.0, 110.0, dist));
+      vec3 dirt = vec3(0.46, 0.37, 0.25) * (0.82 + 0.35 * n);
+      float pm = 1.0 - smoothstep(0.65, 1.35, pd + (n - 0.5) * 0.4);
+      soil = mix(soil, dirt, pm * (1.0 - smoothstep(60.0, 160.0, dist) * 0.6));
+      float diff = max(dot(N, uLightDir), 0.0);
+      vec3 col = soil * (ambient(N) + uLightCol * diff);
+      col = applyFog(col, vW);
+      gl_FragColor = vec4(grade(col), 1.0);
+    }`
+});
+const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+terrain.frustumCulled = false;
+scene.add(terrain);
+
+/* =========================================================================
+   Grass: two instanced layers that wrap around the player
+   ========================================================================= */
+function bladeGeometry(segments) {
+  const pos = [], idx = [];
+  for (let i = 0; i < segments; i++) { const y = i / segments; pos.push(-0.5, y, 0, 0.5, y, 0); }
+  pos.push(0, 1, 0);
+  for (let i = 0; i < segments - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  const t = (segments - 1) * 2; idx.push(t, t + 1, segments * 2);
+  return { pos, idx };
+}
+function scatter(count, patch) {
+  const off = new Float32Array(count * 2), rnd = new Float32Array(count * 4);
+  for (let i = 0; i < count; i++) {
+    off[i * 2] = (Math.random() - 0.5) * patch; off[i * 2 + 1] = (Math.random() - 0.5) * patch;
+    rnd[i * 4] = Math.random(); rnd[i * 4 + 1] = Math.random(); rnd[i * 4 + 2] = Math.random(); rnd[i * 4 + 3] = Math.random();
+  }
+  return { off, rnd };
+}
+function makeGrass(count, segments, patch, fade, width, trample) {
+  const { pos, idx } = bladeGeometry(segments);
+  const g = new THREE.InstancedBufferGeometry();
+  g.setIndex(idx);
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  const { off, rnd } = scatter(count, patch);
+  g.setAttribute('aOffset', new THREE.InstancedBufferAttribute(off, 2));
+  g.setAttribute('aRand', new THREE.InstancedBufferAttribute(rnd, 4));
+  g.instanceCount = count;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: withU({ uPatch: { value: patch }, uFade: { value: new THREE.Vector4(...fade) }, uWidth: { value: width }, uWidthMul: { value: 1 } }),
+    side: THREE.DoubleSide,
+    defines: { BEND_BASE: '0.18', BEND_GUST: '0.95', TRAMPLE: trample ? 1 : 0 },
+    vertexShader: `
+      attribute vec2 aOffset; attribute vec4 aRand;
+      uniform float uTime; uniform float uPatch; uniform vec4 uFade; uniform float uWidth; uniform float uWidthMul;
+      uniform vec3 uPlayer; uniform vec2 uWind; uniform float uWindStrength; uniform vec3 uTrail[12];
+      varying float vY; varying vec3 vCol; varying vec3 vW; varying vec3 vN; varying float vGust;
+      ${GLSL_COMMON}
+      void main() {
+        vec2 rel = aOffset - uPlayer.xz;
+        rel = mod(rel + 0.5 * uPatch, uPatch) - 0.5 * uPatch;
+        vec2 wxz = uPlayer.xz + rel;
+        float dist = length(rel);
+        float fade = smoothstep(uFade.x, uFade.y, dist) * (1.0 - smoothstep(uFade.z, uFade.w, dist));
+        float zone = zoneF(wxz);
+        float pd = pathDist(wxz);
+        float h = mix(0.42, 1.05, zone) * (0.6 + 0.8 * aRand.x);
+        h *= smoothstep(0.6, 1.1, pd) * mix(0.45, 1.0, smoothstep(1.0, 3.0, pd));
+        h *= 0.75 + 0.5 * vnoise(wxz * 0.11);
+        h *= fade;
+        if (h < 0.02) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); vY = 0.0; vCol = vec3(0.0); vW = vec3(0.0); vN = vec3(0.0, 1.0, 0.0); vGust = 0.0; return; }
+        ${GLSL_BEND.replace('for (int i = 0; i < 12; i++)', '#if TRAMPLE\n  for (int i = 0; i < 12; i++)').replace('if (s > tr) { tr = s; tdir = d / max(l, 0.001); }\n  }', 'if (s > tr) { tr = s; tdir = d / max(l, 0.001); }\n  }\n#endif')}
+        float y = position.y;
+        float a = b * y;
+        float horiz = h * (1.0 - cos(a)) / b;
+        float vert = h * sin(a) / b;
+        vec2 side = vec2(-facing.y, facing.x);
+        float w = uWidth * uWidthMul * (0.7 + 0.6 * aRand.w) * (1.0 - 0.75 * y);
+        vec3 p;
+        p.xz = wxz + side * position.x * w + bdir * horiz;
+        p.y = terrainH(wxz) + vert;
+        vec3 side3 = vec3(side.x, 0.0, side.y);
+        vec3 T = vec3(bdir.x * sin(a), cos(a), bdir.y * sin(a));
+        vN = normalize(cross(side3, T) + side3 * position.x * 1.4);
+        vec3 gRoot = vec3(0.09, 0.18, 0.04), gTip = vec3(0.42, 0.63, 0.2);
+        vec3 yRoot = vec3(0.3, 0.25, 0.09), yTip = vec3(0.95, 0.79, 0.44);
+        float cz = clamp(zone + (aRand.z - 0.5) * 0.35, 0.0, 1.0);
+        vec3 tip = mix(gTip, yTip, cz) * (0.85 + 0.3 * aRand.x);
+        tip = mix(tip, vec3(0.64, 0.58, 0.3), step(0.93, aRand.z) * 0.6);
+        vCol = mix(mix(gRoot, yRoot, cz), tip, smoothstep(0.0, 1.0, y));
+        vY = y; vW = p; vGust = gust;
+        gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+      }`,
+    fragmentShader: `
+      varying float vY; varying vec3 vCol; varying vec3 vW; varying vec3 vN; varying float vGust;
+      ${GLSL_LIGHT}
+      void main() {
+        vec3 V = normalize(cameraPosition - vW);
+        vec3 N = normalize(vN);
+        if (dot(N, V) < 0.0) N = -N;
+        vec3 L = uLightDir;
+        float wrap = clamp(dot(N, L) * 0.5 + 0.5, 0.0, 1.0);
+        float ao = mix(0.3, 1.0, smoothstep(0.0, 0.8, vY));
+        vec3 col = vCol * (ambient(N) * ao + uLightCol * wrap * mix(0.35, 1.0, vY));
+        float back = pow(clamp(dot(-V, L), 0.0, 1.0), 5.0);
+        col += vCol * uLightCol * back * vY * 1.3;
+        col += uLightCol * pow(max(dot(reflect(-L, N), V), 0.0), 20.0) * 0.16 * vY;
+        col += uLightCol * vGust * 0.07 * vY;
+        col = applyFog(col, vW);
+        gl_FragColor = vec4(grade(col), 1.0);
+      }`
+  });
+  const mesh = new THREE.Mesh(g, mat);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  return mesh;
+}
+const grassNear = makeGrass(MAXQ.near, 4, 76, [-1, 0, 29, 36], 0.075, true);
+const grassFar = makeGrass(MAXQ.far, 1, 240, [26, 36, 92, 116], 0.2, false);
+
+/* =========================================================================
+   Wildflowers (decorative drifts, instanced and wrapped like the grass)
+   ========================================================================= */
+function flowerGeometry() {
+  const pos = [], part = [];
+  const push = (x, y, z, p) => { pos.push(x, y, z); part.push(p); };
+  // stem quad
+  push(-0.5, 0, 0, 0); push(0.5, 0, 0, 0); push(-0.5, 1, 0, 0);
+  push(0.5, 0, 0, 0); push(0.5, 1, 0, 0); push(-0.5, 1, 0, 0);
+  // five petals
+  for (let k = 0; k < 5; k++) {
+    const th = (k / 5) * Math.PI * 2;
+    const P = (r, a, y) => [Math.cos(th + a) * r, y, Math.sin(th + a) * r];
+    const c = [0, 0.03, 0], l = P(0.5, -0.38, 0.06), t = P(1, 0, 0.2), r = P(0.5, 0.38, 0.06);
+    push(...c, 1); push(...l, 1); push(...t, 1);
+    push(...c, 1); push(...t, 1); push(...r, 1);
+  }
+  // centre
+  for (let k = 0; k < 5; k++) {
+    const a0 = (k / 5) * Math.PI * 2, a1 = ((k + 1) / 5) * Math.PI * 2;
+    push(0, 0.1, 0, 2); push(Math.cos(a0) * 0.28, 0.07, Math.sin(a0) * 0.28, 2); push(Math.cos(a1) * 0.28, 0.07, Math.sin(a1) * 0.28, 2);
+  }
+  return { pos, part };
+}
+const flowers = (() => {
+  const { pos, part } = flowerGeometry();
+  const g = new THREE.InstancedBufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('aPart', new THREE.Float32BufferAttribute(part, 1));
+  const PATCH = 62;
+  const { off, rnd } = scatter(MAXQ.flowers, PATCH);
+  g.setAttribute('aOffset', new THREE.InstancedBufferAttribute(off, 2));
+  g.setAttribute('aRand', new THREE.InstancedBufferAttribute(rnd, 4));
+  g.instanceCount = MAXQ.flowers;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: withU({ uPatch: { value: PATCH }, uFade: { value: new THREE.Vector4(-1, 0, 22, 29) } }),
+    side: THREE.DoubleSide,
+    defines: { BEND_BASE: '0.1', BEND_GUST: '0.55' },
+    vertexShader: `
+      attribute vec2 aOffset; attribute vec4 aRand; attribute float aPart;
+      uniform float uTime; uniform float uPatch; uniform vec4 uFade;
+      uniform vec3 uPlayer; uniform vec2 uWind; uniform float uWindStrength; uniform vec3 uTrail[12];
+      varying vec3 vCol; varying vec3 vW; varying vec3 vN; varying float vY; varying float vPetal;
+      ${GLSL_COMMON}
+      void main() {
+        vec2 rel = aOffset - uPlayer.xz;
+        rel = mod(rel + 0.5 * uPatch, uPatch) - 0.5 * uPatch;
+        vec2 wxz = uPlayer.xz + rel;
+        float dist = length(rel);
+        float fade = smoothstep(uFade.x, uFade.y, dist) * (1.0 - smoothstep(uFade.z, uFade.w, dist));
+        float zone = zoneF(wxz);
+        float pd = pathDist(wxz);
+        float dens = mix(0.9, 0.24, zone) * smoothstep(0.22, 0.68, vnoise(wxz * 0.07 + 11.0)) * 1.45;
+        float stemH = mix(0.46, 1.08, zone) * (0.92 + 0.35 * aRand.x) * fade;
+        if (aRand.w > dens || pd < 1.3 || stemH < 0.03) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); vCol = vec3(0.0); vW = vec3(0.0); vN = vec3(0.0, 1.0, 0.0); vY = 0.0; vPetal = 0.0; return; }
+        ${GLSL_BEND}
+        vec3 base = vec3(wxz.x, terrainH(wxz), wxz.y);
+        vec3 bd3 = vec3(bdir.x, 0.0, bdir.y);
+        vec3 p; vec3 n;
+        if (aPart < 0.5) {
+          float y = position.y; float a = b * y;
+          vec3 side = normalize(vec3(-bdir.y, 0.0, bdir.x));
+          p = base + bd3 * (stemH * (1.0 - cos(a)) / b) + vec3(0.0, stemH * sin(a) / b, 0.0) + side * position.x * 0.014;
+          n = normalize(cross(side, vec3(bdir.x * sin(a), cos(a), bdir.y * sin(a))));
+          vCol = vec3(0.16, 0.31, 0.08); vPetal = 0.0; vY = y * 0.85;
+        } else {
+          vec3 tipP = base + bd3 * (stemH * (1.0 - cos(b)) / b) + vec3(0.0, stemH * sin(b) / b, 0.0);
+          float tilt = clamp(0.3 + b * 0.6, 0.0, 1.2);
+          vec3 up = normalize(vec3(bdir.x * sin(tilt), cos(tilt), bdir.y * sin(tilt)));
+          vec3 r = normalize(cross(up, bd3));
+          vec3 f = cross(r, up);
+          float ra = aRand.y * 6.2831; float c = cos(ra), s = sin(ra);
+          vec2 q = vec2(c * position.x - s * position.z, s * position.x + c * position.z);
+          float headR = (0.035 + 0.03 * aRand.y) * mix(1.0, 1.25, zone);
+          p = tipP + (r * q.x + up * position.y + f * q.y) * headR;
+          n = up;
+          float k = aRand.z;
+          vec3 petal; vec3 centre;
+          if (zone > 0.5) {
+            if (k < 0.62) { petal = vec3(0.88, 0.12, 0.06); centre = vec3(0.08, 0.06, 0.05); }
+            else if (k < 0.85) { petal = vec3(0.28, 0.42, 0.95); centre = vec3(0.2, 0.2, 0.5); }
+            else { petal = vec3(0.93, 0.92, 0.86); centre = vec3(0.95, 0.72, 0.12); }
+          } else {
+            if (k < 0.34) { petal = vec3(0.93, 0.92, 0.86); centre = vec3(0.95, 0.72, 0.12); }
+            else if (k < 0.58) { petal = vec3(1.0, 0.8, 0.12); centre = vec3(0.9, 0.6, 0.1); }
+            else if (k < 0.74) { petal = vec3(0.86, 0.42, 0.62); centre = vec3(0.7, 0.3, 0.45); }
+            else if (k < 0.88) { petal = vec3(0.56, 0.36, 0.86); centre = vec3(0.95, 0.85, 0.5); }
+            else { petal = vec3(0.32, 0.46, 0.95); centre = vec3(0.95, 0.95, 0.9); }
+          }
+          vCol = aPart < 1.5 ? petal : centre;
+          vPetal = 1.0; vY = 1.0;
+        }
+        vW = p; vN = n;
+        gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vCol; varying vec3 vW; varying vec3 vN; varying float vY; varying float vPetal;
+      ${GLSL_LIGHT}
+      void main() {
+        vec3 V = normalize(cameraPosition - vW);
+        vec3 N = normalize(vN);
+        if (dot(N, V) < 0.0) N = -N;
+        vec3 L = uLightDir;
+        float wrap = clamp(dot(N, L) * 0.5 + 0.5, 0.0, 1.0);
+        vec3 col = vCol * (ambient(N) * mix(0.4, 1.0, vY) + uLightCol * wrap * 0.9);
+        col += vCol * uLightCol * pow(clamp(dot(-V, L), 0.0, 1.0), 4.0) * (0.4 + vPetal * 1.4);
+        col = applyFog(col, vW);
+        gl_FragColor = vec4(grade(col), 1.0);
+      }`
+  });
+  const mesh = new THREE.Mesh(g, mat);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  return mesh;
+})();
+
+/* =========================================================================
+   Trees (instanced trunks and foliage blobs, streamed by world cell)
+   ========================================================================= */
+function rng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0; let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const cellSeed = (cx, cz, salt) => (Math.imul(cx | 0, 73856093) ^ Math.imul(cz | 0, 19349663) ^ Math.imul(salt, 83492791)) >>> 0;
+
+const TREE_CELL = 55, TREE_R = 6, TRUNK_CAP = 320, BLOB_CAP = 3200;
+function makeTree(x, z, r, scale) {
+  const y = terrainH(x, z) - 0.25;
+  const trunkH = (3.0 + r() * 2.2) * scale;
+  const trunkR = (0.2 + r() * 0.1) * scale;
+  const cy = y + trunkH + 1.1 * scale;
+  const blobs = [];
+  const n = scale > 1.2 ? 12 : 5 + Math.floor(r() * 3);
+  const tint = [0.2 + r() * 0.08, 0.33 + r() * 0.1, 0.1 + r() * 0.05];
+  blobs.push({ x, y: cy + 0.4 * scale, z, s: (2.3 + r() * 0.6) * scale, c: tint });
+  for (let i = 1; i < n; i++) {
+    const a = r() * Math.PI * 2, d = (1.2 + r() * 1.4) * scale;
+    const k = 0.82 + r() * 0.35;
+    blobs.push({ x: x + Math.cos(a) * d, y: cy + (r() * 2.4 - 0.9) * scale, z: z + Math.sin(a) * d, s: (1.4 + r() * 1.2) * scale,
+      c: [tint[0] * k, tint[1] * k, tint[2] * k] });
+  }
+  return { x, y, z, trunkH, trunkR, blobs, col: trunkR + 0.35 };
+}
+// A landmark oak on the highest ground ahead of the starting point.
+const heroTree = (() => {
+  let best = null, bh = -Infinity;
+  for (let i = 0; i < 60; i++) {
+    const t = i / 59;
+    for (const off of [-40, -28, 28, 40]) {
+      const z = -70 - t * 110, x = pathX(z) + off;
+      const h = terrainH(x, z);
+      if (h > bh) { bh = h; best = { x, z }; }
+    }
+  }
+  return makeTree(best.x, best.z, rng(4242), 1.7);
+})();
+const treeCache = new Map();
+function treesInCell(cx, cz) {
+  const key = cx + ',' + cz;
+  let list = treeCache.get(key);
+  if (list) return list;
+  list = [];
+  const r = rng(cellSeed(cx, cz, 1));
+  const tryTree = (x, z) => {
+    if (pathDist(x, z) < 5) return;
+    if (Math.hypot(x - heroTree.x, z - heroTree.z) < 22) return;
+    list.push(makeTree(x, z, r, 0.85 + r() * 0.4));
+  };
+  if (r() < 0.34) {
+    const x = (cx + 0.15 + r() * 0.7) * TREE_CELL, z = (cz + 0.15 + r() * 0.7) * TREE_CELL;
+    tryTree(x, z);
+    if (r() < 0.3) { const a = r() * 6.28; tryTree(x + Math.cos(a) * 9, z + Math.sin(a) * 9); }
+  }
+  if (Math.floor(heroTree.x / TREE_CELL) === cx && Math.floor(heroTree.z / TREE_CELL) === cz) list.push(heroTree);
+  treeCache.set(key, list);
+  if (treeCache.size > 3000) treeCache.delete(treeCache.keys().next().value);
+  return list;
+}
+function treesNear(x, z, radius) {
+  const out = [];
+  const c0x = Math.floor((x - radius) / TREE_CELL), c1x = Math.floor((x + radius) / TREE_CELL);
+  const c0z = Math.floor((z - radius) / TREE_CELL), c1z = Math.floor((z + radius) / TREE_CELL);
+  for (let cx = c0x; cx <= c1x; cx++) for (let cz = c0z; cz <= c1z; cz++) {
+    for (const t of treesInCell(cx, cz)) if (Math.hypot(t.x - x, t.z - z) < radius) out.push(t);
+  }
+  return out;
+}
+
+const trees = (() => {
+  const trunkBase = new THREE.CylinderGeometry(0.6, 1, 1, 8, 1, true); trunkBase.translate(0, 0.5, 0);
+  const tg = new THREE.InstancedBufferGeometry().copy(trunkBase);
+  const aTrunk = new THREE.InstancedBufferAttribute(new Float32Array(TRUNK_CAP * 4), 4); aTrunk.setUsage(THREE.DynamicDrawUsage);
+  const aTrunkR = new THREE.InstancedBufferAttribute(new Float32Array(TRUNK_CAP), 1); aTrunkR.setUsage(THREE.DynamicDrawUsage);
+  tg.setAttribute('aTrunk', aTrunk); tg.setAttribute('aTrunkR', aTrunkR); tg.instanceCount = 0;
+  const trunkMat = new THREE.ShaderMaterial({
+    uniforms: withU(),
+    vertexShader: `
+      attribute vec4 aTrunk; attribute float aTrunkR; varying vec3 vW; varying vec3 vN; varying float vY;
+      void main() {
+        vec3 p = aTrunk.xyz + vec3(position.x * aTrunkR, position.y * aTrunk.w, position.z * aTrunkR);
+        vN = normalize(normal); vW = p; vY = position.y;
+        gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vW; varying vec3 vN; varying float vY;
+      ${GLSL_COMMON}
+      ${GLSL_LIGHT}
+      void main() {
+        vec3 N = normalize(vN);
+        float streak = vnoise(vec2(atan(N.z, N.x) * 6.0, vW.y * 1.5));
+        vec3 bark = vec3(0.24, 0.18, 0.13) * (0.7 + 0.5 * streak);
+        vec3 col = bark * (ambient(N) * mix(0.5, 1.0, vY) + uLightCol * max(dot(N, uLightDir), 0.0) * 0.8);
+        gl_FragColor = vec4(grade(applyFog(col, vW)), 1.0);
+      }`
+  });
+  const trunkMesh = new THREE.Mesh(tg, trunkMat); trunkMesh.frustumCulled = false; scene.add(trunkMesh);
+
+  const blobBase = new THREE.IcosahedronGeometry(1, 2);
+  const bg = new THREE.InstancedBufferGeometry().copy(blobBase);
+  const aBlob = new THREE.InstancedBufferAttribute(new Float32Array(BLOB_CAP * 4), 4); aBlob.setUsage(THREE.DynamicDrawUsage);
+  const aTint = new THREE.InstancedBufferAttribute(new Float32Array(BLOB_CAP * 3), 3); aTint.setUsage(THREE.DynamicDrawUsage);
+  bg.setAttribute('aBlob', aBlob); bg.setAttribute('aTint', aTint); bg.instanceCount = 0;
+  const blobMat = new THREE.ShaderMaterial({
+    uniforms: withU(),
+    vertexShader: `
+      attribute vec4 aBlob; attribute vec3 aTint; uniform float uTime; uniform vec2 uWind; uniform float uWindStrength;
+      varying vec3 vW; varying vec3 vN; varying vec3 vTint; varying float vLocalY;
+      void main() {
+        vec3 n = normalize(position);
+        float j = sin(n.x * 5.0 + aBlob.x) * sin(n.y * 4.0 + aBlob.z) * sin(n.z * 5.0 + aBlob.y);
+        vec3 p = aBlob.xyz + n * aBlob.w * (1.0 + 0.18 * j) * vec3(1.0, 0.82, 1.0);
+        float sway = sin(uTime * 1.1 + aBlob.x * 0.3 + aBlob.z * 0.2) * 0.06 * uWindStrength * aBlob.w * (0.5 + 0.5 * n.y);
+        p.xz += uWind * sway;
+        vN = n; vW = p; vTint = aTint; vLocalY = n.y;
+        gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vW; varying vec3 vN; varying vec3 vTint; varying float vLocalY;
+      ${GLSL_COMMON}
+      ${GLSL_LIGHT}
+      void main() {
+        float leaf = vnoise(vW.xz * 3.1 + vW.y * 2.3) * 0.6 + vnoise(vW.xy * 5.7 - vW.z) * 0.4;
+        vec3 N = normalize(vN + (vec3(leaf, vnoise(vW.zy * 4.0), 1.0 - leaf) - 0.5) * 0.9);
+        vec3 V = normalize(cameraPosition - vW);
+        float wrap = clamp(dot(N, uLightDir) * 0.6 + 0.4, 0.0, 1.0);
+        float ao = mix(0.45, 1.0, smoothstep(-0.8, 0.7, vLocalY));
+        vec3 base = vTint * (0.75 + 0.5 * leaf);
+        vec3 col = base * (ambient(N) * ao + uLightCol * wrap * 0.95 * ao);
+        col += base * uLightCol * pow(clamp(dot(-V, uLightDir), 0.0, 1.0), 6.0) * 0.6;
+        gl_FragColor = vec4(grade(applyFog(col, vW)), 1.0);
+      }`
+  });
+  const blobMesh = new THREE.Mesh(bg, blobMat); blobMesh.frustumCulled = false; scene.add(blobMesh);
+
+  let lastKey = '';
+  function update(px, pz) {
+    const cx = Math.floor(px / TREE_CELL), cz = Math.floor(pz / TREE_CELL);
+    const key = cx + ',' + cz;
+    if (key === lastKey) return;
+    lastKey = key;
+    let nt = 0, nb = 0;
+    for (let x = cx - TREE_R; x <= cx + TREE_R; x++) for (let z = cz - TREE_R; z <= cz + TREE_R; z++) {
+      for (const t of treesInCell(x, z)) {
+        if (nt >= TRUNK_CAP || nb + t.blobs.length > BLOB_CAP) continue;
+        aTrunk.setXYZW(nt, t.x, t.y, t.z, t.trunkH + 1.2); aTrunkR.setX(nt, t.trunkR); nt++;
+        for (const b of t.blobs) { aBlob.setXYZW(nb, b.x, b.y, b.z, b.s); aTint.setXYZ(nb, b.c[0], b.c[1], b.c[2]); nb++; }
+      }
+    }
+    aTrunk.needsUpdate = aTrunkR.needsUpdate = aBlob.needsUpdate = aTint.needsUpdate = true;
+    tg.instanceCount = nt; bg.instanceCount = nb;
+  }
+  return { update, reset() { lastKey = ''; } };
+})();
+
+/* =========================================================================
+   Pickable wildflowers (one per world cell, species chosen by habitat)
+   ========================================================================= */
+const pickMat = new THREE.ShaderMaterial({
+  uniforms: withU(),
+  side: THREE.DoubleSide,
+  vertexShader: `
+    attribute vec3 aColor; varying vec3 vC; varying vec3 vN; varying vec3 vW;
+    void main() {
+      vec4 w = modelMatrix * vec4(position, 1.0);
+      vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); vC = aColor;
+      gl_Position = projectionMatrix * viewMatrix * w;
+    }`,
+  fragmentShader: `
+    varying vec3 vC; varying vec3 vN; varying vec3 vW;
+    ${GLSL_LIGHT}
+    void main() {
+      vec3 V = normalize(cameraPosition - vW);
+      vec3 N = normalize(vN);
+      if (dot(N, V) < 0.0) N = -N;
+      float wrap = clamp(dot(N, uLightDir) * 0.5 + 0.5, 0.0, 1.0);
+      vec3 col = vC * (ambient(N) + uLightCol * wrap);
+      col += vC * uLightCol * pow(clamp(dot(-V, uLightDir), 0.0, 1.0), 4.0) * 0.9;
+      col += vC * 0.12 * uNight;
+      gl_FragColor = vec4(grade(applyFog(col, vW)), 1.0);
+    }`
+});
+const PG = { sph: new THREE.SphereGeometry(1, 10, 8), sphLo: new THREE.SphereGeometry(1, 7, 5), cone: new THREE.ConeGeometry(1, 1, 6), ico: new THREE.IcosahedronGeometry(1, 1) };
+const M = (p = [0, 0, 0], r = [0, 0, 0], s = [1, 1, 1]) => new THREE.Matrix4().compose(new THREE.Vector3(...p), new THREE.Quaternion().setFromEuler(new THREE.Euler(r[0], r[1], r[2])), new THREE.Vector3(...s));
+const mul = (...ms) => { const out = new THREE.Matrix4(); for (const m of ms) out.multiply(m); return out; };
+function radial(n, geo, color, rad, tilt, s, y = 0, phase = 0, pre = null) {
+  const parts = [];
+  for (let i = 0; i < n; i++) {
+    const th = phase + (i / n) * Math.PI * 2;
+    const chain = [M([0, y, 0], [0, th, 0]), M([rad, 0, 0]), M(undefined, [0, 0, tilt])];
+    if (pre) chain.push(pre);
+    chain.push(M(undefined, undefined, s));
+    parts.push([geo, color, mul(...chain)]);
+  }
+  return parts;
+}
+function build(parts) {
+  const pos = [], nor = [], col = [];
+  for (const [g0, c, m] of parts) {
+    const g = g0.index ? g0.toNonIndexed() : g0.clone();
+    g.applyMatrix4(m);
+    const p = g.attributes.position.array, n = g.attributes.normal.array, cc = new THREE.Color(c);
+    for (let i = 0; i < p.length; i += 3) { pos.push(p[i], p[i + 1], p[i + 2]); nor.push(n[i], n[i + 1], n[i + 2]); col.push(cc.r, cc.g, cc.b); }
+    g.dispose();
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
+  return geo;
+}
+const stemGeo = (() => { const g = new THREE.CylinderGeometry(0.0045, 0.006, 1, 5, 1); g.translate(0, 0.5, 0); return build([[g, '#4f7a2c', new THREE.Matrix4()]]); })();
+const coneOut = M(undefined, [0, 0, -Math.PI / 2]);
+const lupineSpike = () => {
+  const parts = [];
+  for (let k = 0; k < 11; k++) {
+    const s = 0.021 * (1 - k / 13);
+    parts.push(...radial(3, PG.sphLo, k % 2 ? '#8a6ed8' : '#6c4fc0', s * 0.9, 0, [s, s * 0.8, s], k * 0.034, k * 1.1));
+  }
+  parts.push([PG.sph, '#cdbcf2', M([0, 0.38, 0], undefined, [0.008, 0.012, 0.008])]);
+  return parts;
+};
+const HEADS = {
+  poppy: { stem: 0.6, head: [...radial(4, PG.sph, '#d42a1b', 0.034, 0.75, [0.045, 0.012, 0.042]),
+    [PG.sph, '#241d16', M([0, 0.013, 0], undefined, [0.016, 0.02, 0.016])], [PG.sph, '#7b8a55', M([0, 0.032, 0], undefined, [0.012, 0.004, 0.012])]] },
+  cornflower: { stem: 0.55, head: [...radial(11, PG.cone, '#3d5fe0', 0.03, 0.35, [0.01, 0.036, 0.01], 0.008, 0, coneOut),
+    [PG.sph, '#34306e', M([0, 0.008, 0], undefined, [0.016, 0.012, 0.016])], [PG.sph, '#4d6a2c', M([0, -0.01, 0], undefined, [0.012, 0.017, 0.012])]] },
+  daisy: { stem: 0.5, head: [...radial(16, PG.sph, '#f5f3ec', 0.045, 0.08, [0.04, 0.005, 0.011]),
+    [PG.sph, '#f0b21c', M([0, 0.006, 0], undefined, [0.02, 0.01, 0.02])]] },
+  buttercup: { stem: 0.45, head: [...radial(5, PG.sph, '#f8d11e', 0.02, 0.9, [0.022, 0.008, 0.02]),
+    [PG.sph, '#cf9c12', M([0, 0.012, 0], undefined, [0.008, 0.008, 0.008])]] },
+  clover: { stem: 0.25, head: [[PG.ico, '#c4497c', M([0, 0.025, 0], undefined, [0.028, 0.032, 0.028])],
+    ...radial(10, PG.sphLo, '#de76a4', 0.024, 0.6, [0.01, 0.01, 0.01], 0.035)],
+    base: radial(3, PG.sph, '#3f6e2a', 0.03, 0.15, [0.03, 0.006, 0.022], 0.01) },
+  lupine: { stem: 0.5, head: lupineSpike(), base: radial(7, PG.sph, '#3a6628', 0.05, 0.25, [0.05, 0.005, 0.012], 0.02) },
+  orchid: { stem: 0.3, head: [...radial(3, PG.sph, '#e8a6c6', 0.03, 0.4, [0.032, 0.006, 0.016], 0, Math.PI / 2),
+    [PG.sph, '#5b3420', M([0, -0.01, 0.022], undefined, [0.018, 0.022, 0.016])], [PG.sph, '#d9b84a', M([0, -0.004, 0.037], undefined, [0.008, 0.008, 0.004])],
+    [PG.sph, '#7f9a4a', M([0, 0.015, 0.012], undefined, [0.006, 0.012, 0.006])]],
+    base: radial(4, PG.sph, '#4a6e30', 0.04, 0.1, [0.04, 0.006, 0.015], 0.01) }
+};
+const HEADGEO = {}, BASEGEO = {};
+for (const id in HEADS) { HEADGEO[id] = build(HEADS[id].head); if (HEADS[id].base) BASEGEO[id] = build(HEADS[id].base); }
+
+const P_CELL = 22, P_R = 3, PICK_SCALE = 1.7;
+const pickCache = new Map();
+const picked = new Set();
+function pickableInCell(cx, cz) {
+  const key = cx + ',' + cz;
+  if (pickCache.has(key)) return pickCache.get(key);
+  const r = rng(cellSeed(cx, cz, 7));
+  let res = null;
+  if (r() < 0.62) {
+    const x = (cx + 0.12 + r() * 0.76) * P_CELL, z = (cz + 0.12 + r() * 0.76) * P_CELL;
+    const pd = pathDist(x, z);
+    if (pd > 1.6) {
+      const h = terrainH(x, z), zone = zoneF(x, z);
+      const nearTree = treesNear(x, z, 14).some((t) => Math.hypot(t.x - x, t.z - z) > t.col + 0.5);
+      const opts = [['clover', 3]];
+      if (zone > 0.55) opts.push(['poppy', 4]);
+      if (zone < 0.45) opts.push(['daisy', 4]);
+      if (pd < 9) opts.push(['cornflower', 6]);
+      if (h < -5) opts.push(['buttercup', 6]);
+      if (nearTree) opts.push(['lupine', 9]);
+      if (h > 8.5) opts.push(['orchid', 2.6]);
+      let tot = opts.reduce((a, o) => a + o[1], 0), pick = r() * tot, sp = opts[0][0];
+      for (const [id, w] of opts) { if ((pick -= w) <= 0) { sp = id; break; } }
+      res = { key, x, z, species: sp, rot: r() * Math.PI * 2, seed: r() * 100 };
+    }
+  }
+  pickCache.set(key, res);
+  if (pickCache.size > 6000) pickCache.delete(pickCache.keys().next().value);
+  return res;
+}
+// A guaranteed first flower beside the path, a few steps ahead of the start.
+const START_FLOWER = (() => { const z = -9, x = pathX(z) + 2.4; return { key: 'start', x, z, species: 'cornflower', rot: 0.4, seed: 3 }; })();
+
+const active = new Map();
+const pickRoot = new THREE.Group(); scene.add(pickRoot);
+function spawnPickable(d) {
+  const g = new THREE.Group();
+  const zone = zoneF(d.x, d.z);
+  const def = HEADS[d.species];
+  const grassMean = Math.max(0.48, mix(0.42, 1.05, zone) * 0.9);
+  const stemH = Math.max(def.stem, grassMean + 0.06);
+  const stem = new THREE.Mesh(stemGeo, pickMat); stem.scale.set(PICK_SCALE, stemH, PICK_SCALE);
+  const head = new THREE.Mesh(HEADGEO[d.species], pickMat); head.position.y = stemH; head.scale.setScalar(PICK_SCALE);
+  g.add(stem, head);
+  if (BASEGEO[d.species]) { const b = new THREE.Mesh(BASEGEO[d.species], pickMat); b.scale.setScalar(PICK_SCALE); g.add(b); }
+  g.position.set(d.x, terrainH(d.x, d.z), d.z);
+  g.rotation.y = d.rot;
+  pickRoot.add(g);
+  const obj = { d, g, headY: stemH + 0.04, pickT: -1 };
+  active.set(d.key, obj);
+  return obj;
+}
+function mix(a, b, t) { return a + (b - a) * t; }
+
+/* Beacons: little motes spiralling up from each pickable flower */
+const BEACON_PER = 12, BEACON_CAP = 90;
+const beacons = (() => {
+  const n = BEACON_PER * BEACON_CAP;
+  const g = new THREE.BufferGeometry();
+  const aAnchor = new THREE.BufferAttribute(new Float32Array(n * 3), 3); aAnchor.setUsage(THREE.DynamicDrawUsage);
+  const aSeed = new THREE.BufferAttribute(new Float32Array(n * 2), 2); aSeed.setUsage(THREE.DynamicDrawUsage);
+  const aColor = new THREE.BufferAttribute(new Float32Array(n * 3), 3); aColor.setUsage(THREE.DynamicDrawUsage);
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  g.setAttribute('aAnchor', aAnchor); g.setAttribute('aSeed', aSeed); g.setAttribute('aColor', aColor);
+  g.setDrawRange(0, 0);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: withU(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `
+      attribute vec3 aAnchor; attribute vec2 aSeed; attribute vec3 aColor; uniform float uTime; uniform float uPx; uniform float uNight;
+      varying float vA; varying vec3 vC;
+      void main() {
+        float t = fract(uTime * 0.2 + aSeed.x);
+        float ang = aSeed.x * 40.0 + t * 5.0;
+        float rad = 0.32 * (1.0 - t * 0.6);
+        vec3 p = aAnchor + vec3(cos(ang) * rad, t * 1.7 - 0.1, sin(ang) * rad);
+        vec4 mv = viewMatrix * vec4(p, 1.0);
+        float d = max(-mv.z, 0.1);
+        vA = sin(t * 3.14159) * (0.75 + 0.9 * uNight) * (1.0 - smoothstep(55.0, 80.0, d)) * aSeed.y;
+        vC = aColor;
+        gl_PointSize = clamp(uPx * 0.075 / d, 2.0, 24.0);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying float vA; varying vec3 vC;
+      void main() {
+        float r = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.0, r);
+        gl_FragColor = vec4(mix(vC, vec3(1.0, 0.97, 0.85), 0.5) * 1.3, a * a * vA);
+      }`
+  });
+  const pts = new THREE.Points(g, mat); pts.frustumCulled = false; pts.renderOrder = 5; scene.add(pts);
+  const tmpC = new THREE.Color();
+  function rebuild() {
+    let i = 0;
+    for (const o of active.values()) {
+      if (o.pickT >= 0 || i >= BEACON_CAP * BEACON_PER) continue;
+      tmpC.set(SP[o.d.species].color);
+      for (let k = 0; k < BEACON_PER; k++, i++) {
+        aAnchor.setXYZ(i, o.g.position.x, o.g.position.y + o.headY, o.g.position.z);
+        aSeed.setXY(i, (k / BEACON_PER + o.d.seed) % 1, 1);
+        aColor.setXYZ(i, tmpC.r, tmpC.g, tmpC.b);
+      }
+    }
+    aAnchor.needsUpdate = aSeed.needsUpdate = aColor.needsUpdate = true;
+    g.setDrawRange(0, i);
+  }
+  return { rebuild };
+})();
+
+let lastPickKey = '';
+function updatePickables(px, pz, force) {
+  const cx = Math.floor(px / P_CELL), cz = Math.floor(pz / P_CELL);
+  const key = cx + ',' + cz;
+  if (key === lastPickKey && !force) return;
+  lastPickKey = key;
+  const want = new Map();
+  for (let x = cx - P_R; x <= cx + P_R; x++) for (let z = cz - P_R; z <= cz + P_R; z++) {
+    const d = pickableInCell(x, z);
+    if (d && !picked.has(d.key)) want.set(d.key, d);
+  }
+  if (!picked.has('start') && Math.hypot(START_FLOWER.x - px, START_FLOWER.z - pz) < P_CELL * (P_R + 1)) want.set('start', START_FLOWER);
+  for (const [k, o] of active) if (!want.has(k) && o.pickT < 0) { pickRoot.remove(o.g); active.delete(k); }
+  for (const [k, d] of want) if (!active.has(k)) spawnPickable(d);
+  beacons.rebuild();
+}
+
+/* =========================================================================
+   Fireflies, drifting pollen, butterflies
+   ========================================================================= */
+function makeMotes(count, box, frag, extraVert, size) {
+  const g = new THREE.BufferGeometry();
+  const seed = new Float32Array(count * 4);
+  for (let i = 0; i < seed.length; i++) seed[i] = Math.random();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+  g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 4));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: withU({ uBox: { value: box } }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `
+      attribute vec4 aSeed; uniform float uTime; uniform float uBox; uniform vec3 uPlayer; uniform float uPx; uniform vec2 uWind;
+      varying float vA; varying float vBright;
+      ${GLSL_COMMON}
+      ${GLSL_LIGHT}
+      void main() {
+        ${extraVert}
+        vec2 rel = base - uPlayer.xz;
+        rel = mod(rel + 0.5 * uBox, uBox) - 0.5 * uBox;
+        vec2 wxz = uPlayer.xz + rel;
+        vec3 p = vec3(wxz.x, terrainH(wxz) + height, wxz.y);
+        vec4 mv = viewMatrix * vec4(p, 1.0);
+        float d = max(-mv.z, 0.1);
+        vA *= (1.0 - smoothstep(uBox * 0.34, uBox * 0.5, length(rel))) * smoothstep(0.8, 2.2, d);
+        vBright = pow(max(dot(normalize(p - cameraPosition), uSunDir), 0.0), 8.0);
+        gl_PointSize = clamp(uPx * ${size} / d, 1.0, 18.0);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform float uNight; uniform vec3 uSunGlow; varying float vA; varying float vBright;
+      void main() {
+        float r = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.0, r);
+        ${frag}
+      }`
+  });
+  const pts = new THREE.Points(g, mat); pts.frustumCulled = false; pts.renderOrder = 6; scene.add(pts);
+  return pts;
+}
+const fireflies = makeMotes(260, 44, `
+        gl_FragColor = vec4(vec3(0.78, 1.0, 0.38) * (a * a * 1.6 + smoothstep(0.18, 0.0, r) * 1.5), a * vA);`, `
+        vec2 base = aSeed.xy * uBox + vec2(sin(uTime * 0.21 + aSeed.w * 20.0), cos(uTime * 0.17 + aSeed.w * 13.0)) * 2.5;
+        float height = 0.35 + aSeed.z * 2.3 + sin(uTime * 0.6 + aSeed.w * 9.0) * 0.35;
+        float blink = pow(0.5 + 0.5 * sin(uTime * (0.9 + aSeed.w * 1.4) + aSeed.w * 50.0), 6.0);
+        vA = blink * smoothstep(0.25, 0.75, uNight);`, '0.11');
+const pollen = makeMotes(700, 34, `
+        vec3 c = mix(vec3(1.0, 0.93, 0.75), uSunGlow * 1.2 + 0.2, 0.5);
+        gl_FragColor = vec4(c, a * vA * (0.14 + vBright * 1.6));`, `
+        vec2 base = aSeed.xy * uBox + uWind * uTime * (0.25 + aSeed.w * 0.4) + vec2(sin(uTime * 0.5 + aSeed.w * 30.0), cos(uTime * 0.4 + aSeed.z * 20.0)) * 0.6;
+        float height = 0.2 + pow(aSeed.z, 1.6) * 4.5 + sin(uTime * 0.8 + aSeed.w * 40.0) * 0.25;
+        vA = 1.0 - uNight;`, '0.03');
+
+const BF_COUNT = 12;
+const butterflies = (() => {
+  const g = new THREE.InstancedBufferGeometry();
+  const pos = [], side = [], uv = [];
+  for (const s of [-1, 1]) {
+    const q = [[0, -0.5], [1, -0.5], [1, 0.5], [0, -0.5], [1, 0.5], [0, 0.5]];
+    for (const [x, z] of q) { pos.push(x * s, 0, z); side.push(s); uv.push(x, z + 0.5); }
+  }
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('aSide', new THREE.Float32BufferAttribute(side, 1));
+  g.setAttribute('aUv', new THREE.Float32BufferAttribute(uv, 2));
+  const aPos = new THREE.InstancedBufferAttribute(new Float32Array(BF_COUNT * 4), 4); aPos.setUsage(THREE.DynamicDrawUsage);
+  const aCol = new THREE.InstancedBufferAttribute(new Float32Array(BF_COUNT * 4), 4);
+  const palette = [[0.98, 0.97, 0.92], [0.96, 0.55, 0.12], [0.4, 0.6, 0.98], [0.98, 0.85, 0.2], [0.98, 0.97, 0.92], [0.55, 0.3, 0.2]];
+  const list = [];
+  for (let i = 0; i < BF_COUNT; i++) {
+    const c = palette[i % palette.length];
+    aCol.setXYZW(i, c[0], c[1], c[2], Math.random());
+    list.push({ p: new THREE.Vector3(1e5, 0, 0), v: new THREE.Vector3(), t: new THREE.Vector3(), timer: 0, yaw: 0, size: 0.07 + Math.random() * 0.04 });
+  }
+  g.setAttribute('aPos', aPos); g.setAttribute('aCol', aCol); g.instanceCount = BF_COUNT;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: withU({ uVis: { value: 1 } }), side: THREE.DoubleSide,
+    vertexShader: `
+      attribute float aSide; attribute vec2 aUv; attribute vec4 aPos; attribute vec4 aCol; uniform float uTime; uniform float uVis;
+      varying vec2 vUv; varying vec3 vCol; varying vec3 vW;
+      void main() {
+        float flap = sin(uTime * 16.0 + aCol.w * 30.0) * 1.0 + 0.3;
+        float x = position.x * aSide;
+        float ang = flap * aSide;
+        vec3 l = vec3(aSide * x * cos(flap), x * sin(flap), position.z) * 0.12 * uVis;
+        float c = cos(aPos.w), s = sin(aPos.w);
+        vec3 p = aPos.xyz + vec3(c * l.x + s * l.z, l.y, -s * l.x + c * l.z);
+        vUv = aUv; vCol = aCol.rgb; vW = p;
+        gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec2 vUv; varying vec3 vCol; varying vec3 vW;
+      ${GLSL_LIGHT}
+      void main() {
+        float e1 = length((vUv - vec2(0.45, 0.32)) / vec2(0.55, 0.34));
+        float e2 = length((vUv - vec2(0.36, 0.74)) / vec2(0.4, 0.28));
+        float e = min(e1, e2);
+        if (e > 1.0) discard;
+        vec3 c = mix(vCol, vCol * 0.25, smoothstep(0.72, 0.95, e));
+        c = mix(c, vec3(0.08), smoothstep(0.12, 0.0, vUv.x));
+        vec3 col = c * (uAmbSky + uLightCol * 0.9);
+        gl_FragColor = vec4(grade(applyFog(col, vW)), 1.0);
+      }`
+  });
+  const mesh = new THREE.Mesh(g, mat); mesh.frustumCulled = false; scene.add(mesh);
+  function update(dt, t, px, pz, fx, fz, day) {
+    mat.uniforms.uVis.value = day;
+    for (let i = 0; i < BF_COUNT; i++) {
+      const b = list[i];
+      const dx = b.p.x - px, dz = b.p.z - pz;
+      if (dx * dx + dz * dz > 38 * 38) {
+        const a = Math.atan2(fx, fz) + (Math.random() - 0.5) * 2.4, d = 8 + Math.random() * 22;
+        b.p.set(px + Math.sin(a) * d, 0, pz + Math.cos(a) * d);
+        b.p.y = terrainH(b.p.x, b.p.z) + 0.8 + Math.random();
+        b.timer = 0;
+      }
+      b.timer -= dt;
+      if (b.timer <= 0) {
+        b.timer = 0.6 + Math.random() * 1.8;
+        b.t.set(b.p.x + (Math.random() - 0.5) * 6, 0, b.p.z + (Math.random() - 0.5) * 6);
+        b.t.y = terrainH(b.t.x, b.t.z) + 0.6 + Math.random() * 1.6;
+      }
+      const ax = (b.t.x - b.p.x) * 1.4 + Math.sin(t * 7 + i) * 2.2, ay = (b.t.y - b.p.y) * 2 + Math.sin(t * 11 + i * 3) * 2.5, az = (b.t.z - b.p.z) * 1.4 + Math.cos(t * 6 + i) * 2.2;
+      b.v.x += ax * dt; b.v.y += ay * dt; b.v.z += az * dt;
+      b.v.multiplyScalar(Math.exp(-2.2 * dt));
+      b.p.addScaledVector(b.v, dt);
+      const floor = terrainH(b.p.x, b.p.z) + 0.35;
+      if (b.p.y < floor) { b.p.y = floor; b.v.y = Math.abs(b.v.y); }
+      if (b.v.x * b.v.x + b.v.z * b.v.z > 0.01) b.yaw = Math.atan2(b.v.x, b.v.z) + Math.PI / 2;
+      aPos.setXYZW(i, b.p.x, b.p.y, b.p.z, b.yaw);
+    }
+    aPos.needsUpdate = true;
+  }
+  return { update };
+})();
+
+/* =========================================================================
+   Time of day
+   ========================================================================= */
+const hex = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+const SKY_KEYS = [
+  { e: -1.00, zen: hex('#02040c'), hor: hex('#081024'), light: [0.26, 0.32, 0.5], sky: [0.09, 0.12, 0.22], gnd: [0.04, 0.05, 0.07], glow: [0, 0, 0] },
+  { e: -0.22, zen: hex('#040a1d'), hor: hex('#101b38'), light: [0.26, 0.32, 0.5], sky: [0.1, 0.13, 0.24], gnd: [0.04, 0.05, 0.08], glow: [0, 0, 0] },
+  { e: -0.07, zen: hex('#121d48'), hor: hex('#39365f'), light: [0.02, 0.02, 0.04], sky: [0.16, 0.16, 0.28], gnd: [0.06, 0.06, 0.08], glow: [0.35, 0.18, 0.2] },
+  { e: 0.00, zen: hex('#26407e'), hor: hex('#e98049'), light: [0.85, 0.38, 0.16], sky: [0.3, 0.29, 0.4], gnd: [0.12, 0.1, 0.08], glow: [1.0, 0.45, 0.18] },
+  { e: 0.10, zen: hex('#3f70bb'), hor: hex('#fdb974'), light: [1.3, 0.86, 0.52], sky: [0.42, 0.44, 0.56], gnd: [0.16, 0.14, 0.09], glow: [1.0, 0.62, 0.3] },
+  { e: 0.30, zen: hex('#3673c9'), hor: hex('#c8dcea'), light: [1.25, 1.12, 0.95], sky: [0.5, 0.6, 0.74], gnd: [0.18, 0.18, 0.12], glow: [0.8, 0.7, 0.55] },
+  { e: 1.00, zen: hex('#2863c4'), hor: hex('#d0e2ef'), light: [1.3, 1.24, 1.12], sky: [0.55, 0.66, 0.8], gnd: [0.2, 0.2, 0.14], glow: [0.7, 0.66, 0.58] }
+];
+function lerp3(out, a, b, t) { out.set(lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)); }
+const sunDir = new THREE.Vector3(), moonDir = new THREE.Vector3();
+let hour = 17.33;
+function phaseName(h) {
+  if (h < 4.8 || h >= 19.2) return 'Night';
+  if (h < 6.6) return 'Dawn';
+  if (h < 10.5) return 'Morning';
+  if (h < 14) return 'Midday';
+  if (h < 16.6) return 'Afternoon';
+  if (h < 18.05) return 'Golden hour';
+  return 'Dusk';
+}
+const fmtTime = (h) => { const m = Math.floor(((h % 24) + 24) % 24 * 60); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+function applyTime() {
+  const a = (hour - 18) * Math.PI / 12 - 0.23;
+  const y = Math.sin((hour - 6) / 12 * Math.PI) * 0.92;
+  const hm = Math.sqrt(1 - y * y);
+  sunDir.set(Math.sin(a) * hm, y, -Math.cos(a) * hm);
+  moonDir.set(-sunDir.x * 0.9, -sunDir.y, -sunDir.z * 0.9 + 0.3).normalize();
+  const e = sunDir.y;
+  let i = 0;
+  while (i < SKY_KEYS.length - 2 && e > SKY_KEYS[i + 1].e) i++;
+  const k0 = SKY_KEYS[i], k1 = SKY_KEYS[i + 1];
+  const t = clamp((e - k0.e) / (k1.e - k0.e), 0, 1);
+  lerp3(U.uZenith.value, k0.zen, k1.zen, t);
+  lerp3(U.uHorizon.value, k0.hor, k1.hor, t);
+  lerp3(U.uLightCol.value, k0.light, k1.light, t);
+  lerp3(U.uAmbSky.value, k0.sky, k1.sky, t);
+  lerp3(U.uAmbGround.value, k0.gnd, k1.gnd, t);
+  lerp3(U.uSunGlow.value, k0.glow, k1.glow, t);
+  const night = smooth(0.0, -0.16, e);
+  U.uNight.value = night;
+  U.uSunDir.value.copy(sunDir);
+  U.uMoonDir.value.copy(moonDir);
+  if (e > -0.07) U.uLightDir.value.set(sunDir.x, Math.max(sunDir.y, 0.06), sunDir.z).normalize();
+  else U.uLightDir.value.set(moonDir.x, Math.max(moonDir.y, 0.1), moonDir.z).normalize();
+  const golden = Math.exp(-Math.pow((e - 0.05) / 0.12, 2));
+  U.uFogDensity.value = 0.0033 + 0.0014 * night + 0.0009 * golden;
+  const hor = U.uHorizon.value, zen = U.uZenith.value, glow = U.uSunGlow.value, dayness = 1 - night;
+  U.uCloudLit.value.set(lerp(zen.x * 1.4, lerp(hor.x, 1, 0.6) + glow.x * 0.25, dayness), lerp(zen.y * 1.4, lerp(hor.y, 1, 0.6) + glow.y * 0.25, dayness), lerp(zen.z * 1.4, lerp(hor.z, 1, 0.6) + glow.z * 0.25, dayness));
+  U.uCloudShade.value.set((zen.x + hor.x) * 0.45, (zen.y + hor.y) * 0.45, (zen.z + hor.z) * 0.47);
+  renderer.setClearColor(new THREE.Color(hor.x, hor.y, hor.z));
+}
+
+/* =========================================================================
+   Player & input
+   ========================================================================= */
+const player = { x: pathX(0), z: 0, vx: 0, vz: 0, jump: 0, vy: 0, yaw: Math.atan2(pathDX(0), 1), pitch: -0.04, phase: 0, speed: 0 };
+const EYE = 1.62;
+const trail = [];
+let trailAcc = 0;
+const keys = new Set();
+let started = false, locked = false, dragging = false;
+const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 };
+const look = { id: null, x: 0, y: 0 };
+let journalOpen = false, settingsOpen = false;
+
+function applyLook(dx, dy, scale) {
+  const s = 0.0022 * settings.sens * (scale || 1);
+  player.yaw -= dx * s;
+  player.pitch = clamp(player.pitch - dy * s, -1.45, 1.45);
+}
+const typing = (e) => e.target && e.target.closest && e.target.closest('input, select, textarea');
+window.addEventListener('keydown', (e) => {
+  if (typing(e) && !['Escape'].includes(e.key)) return;
+  if (!started) { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); begin(); } return; }
+  keys.add(e.code);
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  switch (e.code) {
+    case 'KeyE': tryPick(); break;
+    case 'KeyJ': togglePanel('journal'); break;
+    case 'KeyM': setMuted(!settings.muted); break;
+    case 'Digit1': setHour(5.6, true); break;
+    case 'Digit2': setHour(12.5, true); break;
+    case 'Digit3': setHour(17.33, true); break;
+    case 'Digit4': setHour(23, true); break;
+    case 'Space': if (player.jump <= 0.001) { player.vy = 3.6; Sound.step(0.6, false); } break;
+    case 'Escape': closePanels(); break;
+  }
+});
+window.addEventListener('keyup', (e) => keys.delete(e.code));
+window.addEventListener('blur', () => { keys.clear(); dragging = false; });
+
+canvas.addEventListener('mousedown', (e) => {
+  if (!started) return;
+  closePanels();
+  if (locked) { if (nearest) tryPick(); return; }
+  dragging = true;
+  if (!coarse && canvas.requestPointerLock) {
+    try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) { /* pointer lock refused; drag to look instead */ }
+  }
+});
+window.addEventListener('mouseup', () => { dragging = false; });
+let skipMove = 0;
+window.addEventListener('mousemove', (e) => {
+  if (!started || !(locked || dragging)) return;
+  const mx = e.movementX || 0, my = e.movementY || 0;
+  // Browsers sometimes report one huge jump as pointer lock engages; drop it.
+  if (skipMove > 0) { skipMove--; return; }
+  if (Math.abs(mx) > 250 || Math.abs(my) > 250) return;
+  applyLook(mx, my, locked ? 1 : 1.6);
+});
+document.addEventListener('pointerlockchange', () => {
+  locked = document.pointerLockElement === canvas;
+  skipMove = 1;
+  $('#lockchip').hidden = locked || coarse || !started;
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  if (!started) return;
+  closePanels();
+  for (const t of e.changedTouches) {
+    if (t.clientX < window.innerWidth * 0.45 && stick.id === null) {
+      Object.assign(stick, { id: t.identifier, x0: t.clientX, y0: t.clientY, dx: 0, dy: 0 });
+      const s = $('#stick'); s.hidden = false; s.style.left = t.clientX + 'px'; s.style.top = t.clientY + 'px';
+      $('#stickKnob').style.transform = 'translate(0px, 0px)';
+    } else if (look.id === null) {
+      Object.assign(look, { id: t.identifier, x: t.clientX, y: t.clientY });
+    }
+  }
+  e.preventDefault();
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === stick.id) {
+      let dx = t.clientX - stick.x0, dy = t.clientY - stick.y0;
+      const l = Math.hypot(dx, dy), R = 50;
+      if (l > R) { dx *= R / l; dy *= R / l; }
+      stick.dx = dx / R; stick.dy = dy / R;
+      $('#stickKnob').style.transform = `translate(${dx}px, ${dy}px)`;
+    } else if (t.identifier === look.id) {
+      applyLook(t.clientX - look.x, t.clientY - look.y, 1.9);
+      look.x = t.clientX; look.y = t.clientY;
+    }
+  }
+  e.preventDefault();
+}, { passive: false });
+const endTouch = (e) => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === stick.id) { stick.id = null; stick.dx = stick.dy = 0; $('#stick').hidden = true; }
+    if (t.identifier === look.id) look.id = null;
+  }
+};
+canvas.addEventListener('touchend', endTouch);
+canvas.addEventListener('touchcancel', endTouch);
+
+function updatePlayer(dt) {
+  const k = (c) => keys.has(c);
+  let f = (k('KeyW') || k('ArrowUp') ? 1 : 0) - (k('KeyS') || k('ArrowDown') ? 1 : 0);
+  let s = (k('KeyD') || k('ArrowRight') ? 1 : 0) - (k('KeyA') || k('ArrowLeft') ? 1 : 0);
+  f += -stick.dy; s += stick.dx;
+  const len = Math.hypot(f, s);
+  if (len > 1) { f /= len; s /= len; }
+  const run = k('ShiftLeft') || k('ShiftRight') || Math.hypot(stick.dx, stick.dy) > 0.95;
+  const pd = pathDist(player.x, player.z);
+  const speed = (run ? 6.4 : 3.1) * (pd < 1.2 ? 1.08 : 1);
+  const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
+  const tx = (-sy * f + cy * s) * speed, tz = (-cy * f - sy * s) * speed;
+  const acc = 1 - Math.exp(-(len > 0.01 ? 7 : 9) * dt);
+  player.vx += (tx - player.vx) * acc;
+  player.vz += (tz - player.vz) * acc;
+  player.x += player.vx * dt;
+  player.z += player.vz * dt;
+  for (const t of treesNear(player.x, player.z, 6)) {
+    const dx = player.x - t.x, dz = player.z - t.z, d = Math.hypot(dx, dz);
+    if (d < t.col && d > 0.0001) { player.x = t.x + dx / d * t.col; player.z = t.z + dz / d * t.col; }
+  }
+  if (player.jump > 0 || player.vy > 0) {
+    player.vy -= 11 * dt; player.jump += player.vy * dt;
+    if (player.jump <= 0) { player.jump = 0; player.vy = 0; Sound.step(0.7, pd < 1.2); }
+  }
+  const v = Math.hypot(player.vx, player.vz);
+  player.speed = v;
+  const prev = player.phase;
+  if (player.jump <= 0) player.phase += v * dt / 0.78;
+  if (Math.floor(player.phase) !== Math.floor(prev) && v > 0.5) Sound.step(Math.min(1, v / 5), pd < 1.2);
+  // trampled grass trail
+  trailAcc += v * dt;
+  if (trailAcc > 0.45 || trail.length === 0) { trailAcc = 0; trail.unshift({ x: player.x, z: player.z, t: 0 }); if (trail.length > 11) trail.length = 11; }
+  for (const p of trail) p.t += dt;
+  const T = U.uTrail.value;
+  T[0].set(player.x, player.z, 1);
+  for (let i = 1; i < 12; i++) {
+    const p = trail[i - 1];
+    if (p) T[i].set(p.x, p.z, Math.max(0, 1 - p.t / 9) * 0.9); else T[i].set(0, 0, 0);
+  }
+}
+
+/* =========================================================================
+   Sound (all synthesised with Web Audio)
+   ========================================================================= */
+const Sound = {
+  ctx: null, ok: false,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { this.ctx = new AC(); } catch (e) { return; }
+    const c = this.ctx;
+    this.master = c.createGain(); this.master.gain.value = settings.muted ? 0 : settings.volume;
+    const comp = c.createDynamicsCompressor();
+    this.master.connect(comp); comp.connect(c.destination);
+    const len = c.sampleRate * 4;
+    this.white = c.createBuffer(1, len, c.sampleRate);
+    this.brown = c.createBuffer(1, len, c.sampleRate);
+    const w = this.white.getChannelData(0), b = this.brown.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { const x = Math.random() * 2 - 1; w[i] = x; last = (last + 0.02 * x) / 1.02; b[i] = last * 3.5; }
+    const loop = (buf, rate) => { const s = c.createBufferSource(); s.buffer = buf; s.loop = true; s.playbackRate.value = rate || 1; s.start(); return s; };
+    // low wind body
+    this.windLP = c.createBiquadFilter(); this.windLP.type = 'lowpass'; this.windLP.frequency.value = 500;
+    this.windGain = c.createGain(); this.windGain.gain.value = 0;
+    loop(this.brown).connect(this.windLP); this.windLP.connect(this.windGain); this.windGain.connect(this.master);
+    // grass hiss in the gusts
+    this.hissBP = c.createBiquadFilter(); this.hissBP.type = 'bandpass'; this.hissBP.frequency.value = 2400; this.hissBP.Q.value = 0.5;
+    this.hissGain = c.createGain(); this.hissGain.gain.value = 0;
+    loop(this.white, 0.97).connect(this.hissBP); this.hissBP.connect(this.hissGain); this.hissGain.connect(this.master);
+    // brushing through grass while walking
+    this.rustleHP = c.createBiquadFilter(); this.rustleHP.type = 'bandpass'; this.rustleHP.frequency.value = 3200; this.rustleHP.Q.value = 0.8;
+    this.rustleGain = c.createGain(); this.rustleGain.gain.value = 0;
+    loop(this.white, 1.13).connect(this.rustleHP); this.rustleHP.connect(this.rustleGain); this.rustleGain.connect(this.master);
+    this.nextBird = c.currentTime + 1.5; this.nextCricket = c.currentTime + 1; this.nextOwl = c.currentTime + 20;
+    this.ok = true;
+  },
+  setVolume() { if (this.ok) this.master.gain.setTargetAtTime(settings.muted ? 0 : settings.volume, this.ctx.currentTime, 0.1); },
+  voice(pan, lp) {
+    const c = this.ctx, g = c.createGain(); g.gain.value = 0;
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp;
+    g.connect(f);
+    if (c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = pan; f.connect(p); p.connect(this.master); } else f.connect(this.master);
+    return g;
+  },
+  note(g, t, dur, amp) {
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(amp, t + 0.012);
+    g.gain.setTargetAtTime(0, t + dur * 0.6, dur * 0.25);
+  },
+  bird() {
+    const c = this.ctx, t0 = c.currentTime + 0.05, pan = Math.random() * 1.6 - 0.8;
+    const g = this.voice(pan, 5000 + Math.random() * 5000);
+    const o = c.createOscillator(); o.type = 'sine'; o.connect(g);
+    const kind = Math.random();
+    let end = t0;
+    const amp = 0.05 + Math.random() * 0.06;
+    if (kind < 0.3) { // skylark: long tumbling song
+      const dur = 2 + Math.random() * 2.5;
+      for (let t = 0; t < dur; t += 0.045) {
+        o.frequency.setValueAtTime(3000 + Math.random() * 3200, t0 + t);
+        g.gain.setValueAtTime(Math.random() < 0.2 ? 0 : amp * 0.6 * (0.5 + Math.random() * 0.5), t0 + t);
+      }
+      g.gain.setValueAtTime(0, t0 + dur); end = t0 + dur;
+    } else if (kind < 0.55) { // two-note whistle
+      o.frequency.setValueAtTime(2900, t0); o.frequency.linearRampToValueAtTime(2700, t0 + 0.22);
+      o.frequency.setValueAtTime(2250, t0 + 0.3); o.frequency.linearRampToValueAtTime(2150, t0 + 0.6);
+      this.note(g, t0, 0.24, amp); this.note(g, t0 + 0.3, 0.3, amp); end = t0 + 0.8;
+    } else if (kind < 0.8) { // trill
+      const n = 8 + Math.floor(Math.random() * 8), base = 3800 + Math.random() * 1400;
+      for (let i = 0; i < n; i++) { const t = t0 + i * 0.065; o.frequency.setValueAtTime(base + Math.random() * 300, t); o.frequency.linearRampToValueAtTime(base - 700, t + 0.04); this.note(g, t, 0.045, amp); }
+      end = t0 + n * 0.065 + 0.1;
+    } else { // warble
+      let t = t0;
+      for (let i = 0; i < 5; i++) { const d = 0.08 + Math.random() * 0.06; o.frequency.setValueAtTime(2400 + Math.random() * 2200, t); o.frequency.exponentialRampToValueAtTime(2400 + Math.random() * 2200, t + d); this.note(g, t, d, amp); t += d + 0.03; }
+      end = t + 0.1;
+    }
+    o.start(t0); o.stop(end + 0.3);
+  },
+  cricket() {
+    const c = this.ctx, t0 = c.currentTime + 0.02;
+    const g = this.voice(Math.random() * 1.8 - 0.9, 9000);
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 4300 + Math.random() * 500; o.connect(g);
+    const amp = 0.012 + Math.random() * 0.02;
+    for (let i = 0; i < 3; i++) { const t = t0 + i * 0.055; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(amp, t + 0.008); g.gain.linearRampToValueAtTime(0, t + 0.035); }
+    o.start(t0); o.stop(t0 + 0.3);
+  },
+  owl() {
+    const c = this.ctx, t0 = c.currentTime + 0.05;
+    const g = this.voice(Math.random() * 1.4 - 0.7, 900);
+    const o = c.createOscillator(); o.type = 'sine'; o.connect(g);
+    [[0, 0.42], [0.62, 0.22], [0.9, 0.6]].forEach(([dt, d]) => {
+      o.frequency.setValueAtTime(410, t0 + dt); o.frequency.linearRampToValueAtTime(360, t0 + dt + d);
+      g.gain.setValueAtTime(0, t0 + dt); g.gain.linearRampToValueAtTime(0.09, t0 + dt + 0.06); g.gain.linearRampToValueAtTime(0, t0 + dt + d);
+    });
+    o.start(t0); o.stop(t0 + 1.7);
+  },
+  step(strength, onPath) {
+    if (!this.ok) return;
+    const c = this.ctx, t = c.currentTime;
+    const s = c.createBufferSource(); s.buffer = this.white; s.playbackRate.value = 0.8 + Math.random() * 0.5;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = onPath ? 420 + Math.random() * 180 : 1100 + Math.random() * 700; f.Q.value = onPath ? 1.2 : 0.7;
+    const g = c.createGain(); const amp = (onPath ? 0.28 : 0.2) * strength;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(amp, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0008, t + (onPath ? 0.12 : 0.2));
+    s.connect(f); f.connect(g); g.connect(this.master);
+    s.start(t, Math.random() * 3); s.stop(t + 0.25);
+  },
+  chime(isNew) {
+    if (!this.ok) return;
+    const c = this.ctx, t0 = c.currentTime + 0.02;
+    const notes = isNew ? [1046.5, 1318.5, 1568, 2093] : [1318.5, 1568];
+    notes.forEach((fq, i) => {
+      const t = t0 + i * 0.09;
+      const g = c.createGain(); g.connect(this.master);
+      for (const [mult, a] of [[1, 0.09], [2.01, 0.025]]) { const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = fq * mult; o.connect(g); o.start(t); o.stop(t + 1.6); }
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    });
+  },
+  update(dt, gust, grassy) {
+    if (!this.ok) return;
+    const c = this.ctx, now = c.currentTime;
+    const w = settings.wind;
+    this.windGain.gain.setTargetAtTime((0.05 + gust * 0.22) * Math.min(1, w + 0.15), now, 0.3);
+    this.windLP.frequency.setTargetAtTime(280 + gust * 520 * w, now, 0.3);
+    this.hissGain.gain.setTargetAtTime(gust * gust * 0.05 * w, now, 0.25);
+    this.rustleGain.gain.setTargetAtTime(Math.min(1, player.speed / 5) * 0.06 * grassy, now, 0.08);
+    const night = U.uNight.value, day = 1 - smooth(-0.05, 0.08, -sunDir.y);
+    if (now > this.nextBird) { if (day > 0.3 && Math.random() < day) this.bird(); this.nextBird = now + 1.2 + Math.random() * 4.5; }
+    if (now > this.nextCricket) { if (night > 0.3) this.cricket(); this.nextCricket = now + 0.12 + Math.random() * 0.5; }
+    if (now > this.nextOwl) { if (night > 0.7 && Math.random() < 0.5) this.owl(); this.nextOwl = now + 18 + Math.random() * 30; }
+  }
+};
+
+/* =========================================================================
+   Picking and the journal
+   ========================================================================= */
+let nearest = null;
+const fwd2 = new THREE.Vector2();
+function findNearest() {
+  let best = null, bd = Infinity;
+  fwd2.set(-Math.sin(player.yaw), -Math.cos(player.yaw));
+  for (const o of active.values()) {
+    if (o.pickT >= 0) continue;
+    const dx = o.g.position.x - player.x, dz = o.g.position.z - player.z;
+    const d = Math.hypot(dx, dz);
+    if (d > 2.7) continue;
+    const facing = (dx * fwd2.x + dz * fwd2.y) / Math.max(d, 0.001);
+    if (d > 1.3 && facing < 0.3) continue;
+    const score = d - facing * 0.6;
+    if (score < bd) { bd = score; best = o; }
+  }
+  return best;
+}
+function tryPick() {
+  if (!started || !nearest) return;
+  const o = nearest;
+  o.pickT = 0;
+  picked.add(o.d.key);
+  const sp = SP[o.d.species];
+  const isNew = !(journal[sp.id] > 0);
+  journal[sp.id] = (journal[sp.id] || 0) + 1;
+  store.set('meadowlight.journal.v1', journal);
+  Sound.chime(isNew);
+  beacons.rebuild();
+  renderJournal();
+  if (isNew) {
+    const done = foundCount() === SPECIES.length;
+    showToast(done ? 'Journal complete' : `New species · ${foundCount()} of 7`, sp, done ? 'All seven wildflowers found. The field is yours to wander.' : sp.note, done ? 9000 : 7000);
+  } else {
+    showToast('Added to your bunch', sp, `You have picked ${journal[sp.id]} of these.`, 2800);
+  }
+  nearest = null;
+  $('#prompt').classList.remove('on');
+  $('#crosshair').classList.remove('near');
+}
+function updatePicking(dt, t) {
+  for (const [k, o] of active) {
+    if (o.pickT >= 0) {
+      o.pickT += dt / 0.7;
+      const e = Math.min(1, o.pickT);
+      const target = new THREE.Vector3(camera.position.x, camera.position.y - 0.35, camera.position.z);
+      o.g.position.lerp(target, e * 0.25);
+      o.g.scale.setScalar(Math.max(0.001, 1 - e * e));
+      o.g.rotation.y += dt * 5;
+      if (o.pickT >= 1) { pickRoot.remove(o.g); active.delete(k); }
+    } else if (!reduceMotion) {
+      o.g.rotation.z = Math.sin(t * 1.7 + o.d.seed) * 0.05 * (0.4 + settings.wind);
+      o.g.rotation.x = Math.cos(t * 1.3 + o.d.seed) * 0.04 * (0.4 + settings.wind);
+    }
+  }
+}
+
+function flowerSVG(sp, found) {
+  const c = found ? sp.color : 'none', st = found ? 'rgba(0,0,0,.25)' : 'rgba(247,240,225,.35)';
+  const petals = (n, rx, ry, dist, color, extra = '') => Array.from({ length: n }, (_, i) =>
+    `<ellipse cx="22" cy="${22 - dist}" rx="${rx}" ry="${ry}" transform="rotate(${(360 / n) * i} 22 22)" fill="${found ? color : 'none'}" stroke="${st}" stroke-width="1" ${extra}/>`).join('');
+  let body = '';
+  switch (sp.id) {
+    case 'poppy': body = petals(4, 9.5, 9, 7, c) + `<circle cx="22" cy="22" r="4" fill="${found ? '#241d16' : 'none'}" stroke="${st}"/>`; break;
+    case 'cornflower': body = petals(11, 2.6, 8, 9, c) + `<circle cx="22" cy="22" r="4" fill="${found ? '#34306e' : 'none'}" stroke="${st}"/>`; break;
+    case 'daisy': body = petals(16, 2.4, 8.5, 10, c) + `<circle cx="22" cy="22" r="5" fill="${found ? '#f0b21c' : 'none'}" stroke="${st}"/>`; break;
+    case 'buttercup': body = petals(5, 6.5, 7, 7, c) + `<circle cx="22" cy="22" r="3" fill="${found ? '#cf9c12' : 'none'}" stroke="${st}"/>`; break;
+    case 'clover': body = Array.from({ length: 14 }, (_, i) => { const a = i * 2.4, r = 2 + Math.sqrt(i) * 3; return `<circle cx="${22 + Math.cos(a) * r}" cy="${22 + Math.sin(a) * r}" r="3.4" fill="${found ? (i % 3 ? c : '#de76a4') : 'none'}" stroke="${st}"/>`; }).join(''); break;
+    case 'lupine': body = Array.from({ length: 8 }, (_, i) => `<circle cx="${22 + (i % 2 ? 3 : -3)}" cy="${38 - i * 4.2}" r="${4.2 - i * 0.35}" fill="${found ? (i % 2 ? '#8a6ed8' : c) : 'none'}" stroke="${st}"/>`).join(''); break;
+    case 'orchid': body = petals(3, 5, 9, 9, c) + `<ellipse cx="22" cy="25" rx="5" ry="6.5" fill="${found ? '#5b3420' : 'none'}" stroke="${st}"/><circle cx="22" cy="27" r="1.8" fill="${found ? '#d9b84a' : 'none'}"/>`; break;
+  }
+  return `<svg viewBox="0 0 44 44" aria-hidden="true">${body}</svg>`;
+}
+function renderJournal() {
+  const n = foundCount();
+  $('#foundCount').textContent = n;
+  $('#journalBar').style.width = (n / 7 * 100) + '%';
+  const total = SPECIES.reduce((a, s) => a + (journal[s.id] || 0), 0);
+  $('#pickedTotal').textContent = total === 1 ? '1 flower picked' : `${total} flowers picked`;
+  $('#journalSub').textContent = n === 7 ? 'Every species is in your journal. Keep wandering; the field goes on.'
+    : n === 0 ? 'Seven wildflowers grow in this field. Each one keeps to its own kind of ground.'
+    : `${n} of 7 species found. Each one keeps to its own kind of ground.`;
+  $('#speciesList').innerHTML = SPECIES.map((s) => {
+    const f = journal[s.id] > 0;
+    return `<li class="sp${f ? ' found' : ''}">${flowerSVG(s, f)}<div class="sp-text"><span class="sp-name">${f ? s.name : 'Not yet found'}</span>`
+      + (f ? `<span class="sp-latin">${s.latin}</span>` : `<span class="sp-hint">${s.hint}</span>`)
+      + `</div><span class="sp-count">${f ? '×' + journal[s.id] : ''}</span></li>`;
+  }).join('');
+  $('#beginLabel').textContent = n > 0 || total > 0 ? 'Keep walking' : 'Begin walking';
+}
+let toastTimer = 0;
+function showToast(eyebrow, sp, note, ms) {
+  const el = $('#toast');
+  el.innerHTML = `${flowerSVG(sp, true).replace('<svg', '<svg class="sw"')}<div class="t-eyebrow"></div><div class="t-title"></div><div class="t-note"></div>`;
+  el.querySelector('.t-eyebrow').textContent = eyebrow;
+  const title = el.querySelector('.t-title'); title.textContent = sp.name;
+  const lat = document.createElement('i'); lat.textContent = sp.latin; title.appendChild(lat);
+  el.querySelector('.t-note').textContent = note;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), ms);
+}
+$('#resetJournal').addEventListener('click', () => { $('#resetJournal').hidden = true; $('#resetConfirm').hidden = false; });
+$('#resetConfirm').addEventListener('click', () => {
+  journal = {}; store.set('meadowlight.journal.v1', journal);
+  picked.clear(); updatePickables(player.x, player.z, true);
+  $('#resetJournal').hidden = false; $('#resetConfirm').hidden = true;
+  renderJournal();
+});
+
+/* =========================================================================
+   HUD: panels, settings, compass
+   ========================================================================= */
+function togglePanel(which) {
+  const open = which === 'journal' ? !journalOpen : !settingsOpen;
+  closePanels();
+  if (!open) return;
+  if (which === 'journal') journalOpen = true; else settingsOpen = true;
+  $('#' + which).classList.add('on');
+  $('#lockchip').hidden = true;
+  $(which === 'journal' ? '#btnJournal' : '#btnSettings').setAttribute('aria-expanded', 'true');
+  if (locked && document.exitPointerLock) document.exitPointerLock();
+}
+function closePanels() {
+  journalOpen = settingsOpen = false;
+  $('#journal').classList.remove('on'); $('#settings').classList.remove('on');
+  $('#btnJournal').setAttribute('aria-expanded', 'false'); $('#btnSettings').setAttribute('aria-expanded', 'false');
+  $('#resetJournal').hidden = false; $('#resetConfirm').hidden = true;
+  if (started) $('#lockchip').hidden = locked || coarse;
+}
+$('#btnJournal').addEventListener('click', () => togglePanel('journal'));
+$('#btnSettings').addEventListener('click', () => togglePanel('settings'));
+document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', closePanels));
+function setMuted(m) {
+  settings.muted = m; saveSettings(); Sound.setVolume();
+  $('#btnSound').setAttribute('aria-pressed', String(m));
+  $('#btnSound').setAttribute('aria-label', m ? 'Turn sound on' : 'Mute sound');
+  $('#icoWaves').style.display = m ? 'none' : '';
+  $('#icoMute').style.display = m ? '' : 'none';
+  $('#icoMute').removeAttribute('hidden');
+}
+$('#btnSound').addEventListener('click', () => { Sound.init(); setMuted(!settings.muted); });
+$('#pickBtn').addEventListener('click', (e) => { e.stopPropagation(); tryPick(); });
+
+function setHour(h, fromKey) {
+  hour = ((h % 24) + 24) % 24;
+  $('#timeRange').value = hour.toFixed(2);
+  applyTime();
+  if (fromKey) syncClock(true);
+}
+$('#timeRange').addEventListener('input', (e) => { setHour(parseFloat(e.target.value)); syncClock(true); });
+document.querySelectorAll('[data-time]').forEach((b) => b.addEventListener('click', () => setHour(parseFloat(b.dataset.time), true)));
+$('#timeFlow').checked = settings.timeFlow;
+$('#timeFlow').addEventListener('change', (e) => { settings.timeFlow = e.target.checked; saveSettings(); });
+const windName = (w) => w < 0.1 ? 'Still' : w < 0.45 ? 'Light air' : w < 0.95 ? 'Breezy' : w < 1.3 ? 'Blustery' : 'Gale';
+$('#windRange').value = settings.wind;
+$('#windOut').textContent = windName(settings.wind);
+$('#windRange').addEventListener('input', (e) => { settings.wind = parseFloat(e.target.value); $('#windOut').textContent = windName(settings.wind); saveSettings(); });
+$('#volRange').value = settings.volume;
+$('#volOut').textContent = Math.round(settings.volume * 100) + '%';
+$('#volRange').addEventListener('input', (e) => { settings.volume = parseFloat(e.target.value); $('#volOut').textContent = Math.round(settings.volume * 100) + '%'; Sound.init(); if (settings.muted && settings.volume > 0) setMuted(false); Sound.setVolume(); saveSettings(); });
+$('#sensRange').value = settings.sens;
+$('#sensOut').textContent = settings.sens.toFixed(1) + '×';
+$('#sensRange').addEventListener('input', (e) => { settings.sens = parseFloat(e.target.value); $('#sensOut').textContent = settings.sens.toFixed(1) + '×'; saveSettings(); });
+
+function setQuality(q, chosen) {
+  settings.quality = q;
+  if (chosen) settings.qualityChosen = true;
+  const Q = QUALITY[q];
+  grassNear.geometry.instanceCount = Q.near;
+  grassFar.geometry.instanceCount = Q.far;
+  flowers.geometry.instanceCount = Q.flowers;
+  grassNear.material.uniforms.uWidthMul.value = Math.pow(MAXQ.near / Q.near, 0.3);
+  grassFar.material.uniforms.uWidthMul.value = Math.pow(MAXQ.far / Q.far, 0.3);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Q.dpr));
+  resize();
+  document.querySelectorAll('#qualityChips .chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.q === q)));
+  saveSettings();
+}
+document.querySelectorAll('#qualityChips .chip').forEach((b) => b.addEventListener('click', () => setQuality(b.dataset.q, true)));
+
+// compass
+const compassEl = $('#compass');
+const compassMarks = [];
+for (let d = 0; d < 360; d += 15) {
+  const el = document.createElement('div');
+  const names = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' };
+  if (names[d] !== undefined) { el.className = 'cmark' + (d % 90 === 0 ? ' major' : ''); el.textContent = names[d]; }
+  else el.className = 'cmark tick';
+  compassEl.appendChild(el);
+  compassMarks.push({ el, deg: d });
+}
+const sunMark = document.createElement('div'); sunMark.className = 'cmark sun'; sunMark.innerHTML = '<i></i>'; compassEl.appendChild(sunMark);
+const moonMark = document.createElement('div'); moonMark.className = 'cmark moon'; moonMark.innerHTML = '<i></i>'; compassEl.appendChild(moonMark);
+const compassDeg = (raw) => ((raw + 0.23 - Math.PI / 2) * 180 / Math.PI % 360 + 360) % 360;
+function updateCompass() {
+  const w = compassEl.clientWidth, half = w / 2, span = 75;
+  const head = compassDeg(-player.yaw);
+  const place = (el, deg, show) => {
+    const d = ((deg - head + 540) % 360) - 180;
+    if (!show || Math.abs(d) > span) { el.style.visibility = 'hidden'; return; }
+    el.style.visibility = 'visible';
+    el.style.transform = `translateX(${half + d / span * half - el.offsetWidth / 2}px)`;
+  };
+  for (const m of compassMarks) place(m.el, m.deg, true);
+  place(sunMark, compassDeg(Math.atan2(sunDir.x, -sunDir.z)), sunDir.y > -0.05);
+  place(moonMark, compassDeg(Math.atan2(moonDir.x, -moonDir.z)), U.uNight.value > 0.3);
+}
+let lastClock = '';
+function syncClock(force) {
+  const s = fmtTime(hour);
+  if (s === lastClock && !force) return;
+  lastClock = s;
+  $('#clock').textContent = s;
+  $('#phase').textContent = phaseName(hour);
+  $('#timeOut').textContent = s;
+  if (!settingsOpen || force) $('#timeRange').value = hour.toFixed(2);
+}
+
+/* =========================================================================
+   Start, resize, loop
+   ========================================================================= */
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  const buf = renderer.getDrawingBufferSize(new THREE.Vector2());
+  U.uPx.value = buf.y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+}
+window.addEventListener('resize', resize);
+
+let startT = 0;
+function begin() {
+  if (started) return;
+  started = true;
+  startT = clock.elapsed;
+  Sound.init();
+  $('#intro').classList.add('gone');
+  setTimeout(() => { $('#intro').hidden = true; }, 950);
+  $('#hud').classList.add('on');
+  $('#lockchip').hidden = coarse;
+  if (!coarse && canvas.requestPointerLock) {
+    try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* drag to look instead */ }
+  }
+  canvas.focus({ preventScroll: true });
+  setTimeout(() => $('#hint').classList.add('fade'), 16000);
+}
+$('#begin').addEventListener('click', begin);
+if (coarse) {
+  document.querySelectorAll('[data-desktop]').forEach((el) => { el.hidden = true; });
+  document.querySelectorAll('[data-touch]').forEach((el) => { el.hidden = false; });
+  $('#introControls').innerHTML = '<span>Left thumb walks</span><span>Right thumb looks</span><span>Tap Pick beside a flower</span>';
+}
+document.addEventListener('visibilitychange', () => {
+  if (!Sound.ctx) return;
+  if (document.hidden) Sound.ctx.suspend(); else if (started) Sound.ctx.resume();
+});
+
+const clock = { last: performance.now(), elapsed: 0 };
+const perf = { frames: 0, time: 0, checked: false };
+let hudAcc = 0;
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  let dt = (now - clock.last) / 1000;
+  clock.last = now;
+  if (!(dt > 0)) dt = 0.016;
+  dt = Math.min(dt, 0.05);
+  clock.elapsed += dt;
+  const t = clock.elapsed;
+  U.uTime.value = t;
+
+  // clock: slower through sunrise and sunset so the light lingers
+  if (settings.timeFlow && started) {
+    const slow = sunDir.y > -0.12 && sunDir.y < 0.22 ? 0.4 : 1;
+    hour = (hour + dt / 30 * slow) % 24;
+  }
+  applyTime();
+
+  // wind
+  const wa = 0.6 + Math.sin(t * 0.02) * 0.4;
+  U.uWind.value.set(Math.cos(wa), Math.sin(wa));
+  U.uWindStrength.value = settings.wind * (0.8 + 0.2 * Math.sin(t * 0.07));
+
+  if (started && !journalOpen && !settingsOpen) updatePlayer(dt);
+  else if (started) { player.vx *= 0.9; player.vz *= 0.9; player.speed = 0; updatePlayer(0); }
+  else { // idle drift on the intro screen
+    player.yaw = Math.atan2(pathDX(0), 1) + (reduceMotion ? 0 : Math.sin(t * 0.08) * 0.12);
+    U.uTrail.value[0].set(player.x, player.z, 0);
+  }
+
+  const ground = terrainH(player.x, player.z);
+  const bob = reduceMotion ? 0 : -Math.abs(Math.sin(player.phase * Math.PI)) * 0.045 * Math.min(1, player.speed / 3);
+  camera.position.set(player.x, ground + EYE + bob + player.jump, player.z);
+  camera.rotation.set(player.pitch, player.yaw, 0);
+  const targetFov = 70 + Math.max(0, player.speed - 3.5) * 1.6;
+  if (Math.abs(camera.fov - targetFov) > 0.05) { camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix(); resizePx(); }
+  U.uPlayer.value.copy(camera.position);
+
+  sky.position.copy(camera.position);
+  ringNear.position.set(camera.position.x, 0, camera.position.z);
+  ringFar.position.set(camera.position.x, 0, camera.position.z);
+  terrainMat.uniforms.uOrigin.value.set(Math.round(player.x / TERR_STEP) * TERR_STEP, Math.round(player.z / TERR_STEP) * TERR_STEP);
+
+  trees.update(player.x, player.z);
+  updatePickables(player.x, player.z, false);
+  updatePicking(dt, t);
+  const day = 1 - U.uNight.value;
+  butterflies.update(dt, t, player.x, player.z, -Math.sin(player.yaw), -Math.cos(player.yaw), smooth(0.02, 0.15, sunDir.y) * day);
+
+  // picking prompt
+  if (started) {
+    const n = findNearest();
+    if (n !== nearest) {
+      nearest = n;
+      $('#prompt').classList.toggle('on', !!n);
+      $('#crosshair').classList.toggle('near', !!n);
+      if (n) {
+        const sp = SP[n.d.species];
+        $('#promptText').innerHTML = journal[sp.id] > 0 ? 'Pick another <em></em>' : 'Pick this <em>unknown wildflower</em>';
+        if (journal[sp.id] > 0) $('#promptText em').textContent = sp.name;
+      }
+    }
+  }
+
+  // HUD at ~15 fps
+  hudAcc += dt;
+  if (hudAcc > 0.066 && started) { hudAcc = 0; updateCompass(); syncClock(false); }
+
+  // audio
+  const gust = noise1(t * 0.35 + player.x * 0.02) * 0.7 + noise1(t * 0.9 + 40) * 0.3;
+  Sound.update(dt, gust, pathDist(player.x, player.z) < 1.2 ? 0.3 : 1);
+
+  renderer.render(scene, camera);
+
+  // lower the grass density once if the first seconds run slowly
+  if (started && !perf.checked && !settings.qualityChosen) {
+    if (t - startT > 1.5) { perf.frames++; perf.time += dt; }
+    if (perf.time > 4) {
+      perf.checked = true;
+      const fps = perf.frames / perf.time;
+      if (fps < 34 && settings.quality !== 'low') {
+        setQuality(settings.quality === 'ultra' ? 'high' : 'low', false);
+        settings.qualityChosen = false;
+      }
+    }
+  }
+}
+function resizePx() {
+  const buf = renderer.getDrawingBufferSize(new THREE.Vector2());
+  U.uPx.value = buf.y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+}
+
+/* Boot (restores position and time across live page updates) */
+function boot(data) {
+  if (data && typeof data.x === 'number') {
+    player.x = data.x; player.z = data.z; player.yaw = data.yaw; player.pitch = data.pitch; hour = data.hour;
+  }
+  const hot = window.claude && window.claude.hot;
+  if (hot && typeof hot.snapshot === 'function') {
+    try { hot.snapshot(() => ({ x: player.x, z: player.z, yaw: player.yaw, pitch: player.pitch, hour })); } catch (e) { /* not available */ }
+  }
+  setQuality(settings.quality, false);
+  setMuted(settings.muted);
+  applyTime();
+  syncClock(true);
+  renderJournal();
+  resize();
+  requestAnimationFrame((n) => { clock.last = n; frame(n); });
+}
+const hot = window.claude && window.claude.hot;
+if (hot && typeof hot.ready === 'function') hot.ready(boot); else boot((hot && hot.data) || {});
+})();
+</script>
+</html>

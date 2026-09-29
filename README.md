@@ -30,3 +30,10 @@ message, per how the Claude API is designed to be used (it's stateless).
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | — (required) |
 | `PORT` | Port the server listens on | `3000` |
+
+## Meadowlight
+
+A small first-person walking game lives at `/meadowlight/` (served from `public/meadowlight/index.html`
+when you run the app, or just open the file in a browser). It is a single file: Three.js from a CDN,
+GPU-instanced grass, a day and night cycle, and twelve lost lights to find. WASD to walk, Shift to run,
+Space to jump, mouse to look, Esc to pause. Touch controls appear on phones.
